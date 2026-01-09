@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between h-16">
             <div class="flex items-center">
                 <a href="{{ url('/') }}" class="flex-shrink-0 text-white font-bold text-xl">
-                    {{ config('app.name', 'Laravel') }}
+    <img src="{{ asset('images/PNG Host.png') }}" alt="Logo" class="h-9 w-auto">
                 </a>
             </div>
 

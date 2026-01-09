@@ -29,9 +29,10 @@
             <label for="role" class="block text-gray-700 font-bold mb-2">Role</label>
             <select id="role" name="role" required
                    class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="user" {{ old('role', $user->role) == 'user' ? 'selected' : '' }}>User</option>
-                <option value="manager" {{ old('role', $user->role) == 'manager' ? 'selected' : '' }}>Manager</option>
-                <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Admin</option>
+                <option value="Patient" {{ old('role') == 'Patient' ? 'selected' : '' }}>Patient</option>
+                    <option value="Staff" {{ old('role') == 'Staff' ? 'selected' : '' }}>Staff</option>
+                    <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                    <option value="Doctor" {{ old('role') == 'Doctor ' ? 'selected' : '' }}>Doctor </option>
             </select>
             @error('role') <p class="text-red-500 text-xs italic">{{ $message }}</p> @enderror
         </div>

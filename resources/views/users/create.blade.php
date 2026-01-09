@@ -1,7 +1,9 @@
-@extends('layouts.app') 
-{{-- สมมติว่าคุณมี layout หลักชื่อ 'layouts.app' --}}
-
-@section('content')
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('สร้างบัญชีผู้ใช้') }}
+        </h2>
+    </x-slot>
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6 text-gray-800">✨ Create New User</h1>
 
@@ -44,9 +46,10 @@
                 <label for="role" class="block text-gray-700 font-bold mb-2">Role <span class="text-red-500">*</span></label>
                 <select id="role" name="role" required
                        class="shadow border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150">
-                    <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>User</option>
-                    <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>Manager</option>
+                    <option value="Patient" {{ old('role') == 'Patient' ? 'selected' : '' }}>Patient</option>
+                    <option value="Staff" {{ old('role') == 'Staff' ? 'selected' : '' }}>Staff</option>
                     <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                    <option value="Doctor" {{ old('role') == 'Doctor ' ? 'selected' : '' }}>Doctor </option>
                 </select>
                 @error('role') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
@@ -73,4 +76,4 @@
         </form>
     </div>
 </div>
-@endsection
+</x-app-layout>
