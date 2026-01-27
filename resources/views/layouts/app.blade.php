@@ -18,14 +18,14 @@
         <div class="min-h-screen bg-gray-100">
             @include('layouts.navigation')
 
-            <!-- Page Heading -->
-            @isset($header)
+            <!-- Page Heading (hidden for Dashboard; Dashboard will render its own hero container) -->
+            @if(isset($header) && !request()->routeIs('dashboard'))
                 <header class="bg-white shadow">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
                 </header>
-            @endisset
+            @endif
 
             <!-- Page Content -->
             <main>

@@ -42,6 +42,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/report/services/pdf', [ReportController::class, 'servicesPdf'])
         ->name('report.service.pdf');
 
+    Route::get('/report/booking-summary', [ReportController::class, 'bookingSummary'])->name('report.booking-summary');
+    Route::get('/report/booking-history', [ReportController::class, 'bookingHistory'])->name('report.booking-history');
 });
 
 Route::get('/users', [UserController::class, 'index'])->name('users.index');

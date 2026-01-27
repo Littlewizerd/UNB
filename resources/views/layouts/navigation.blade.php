@@ -1,38 +1,41 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
+<nav x-data="{ open: false }" class="bg-blue-700 text-white py-3 px-6 shadow-lg">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        @php
+            $navLinkClass = request()->routeIs('dashboard') ? 'text-white hover:text-blue-200' : '';
+        @endphp
         <div class="flex justify-between h-16">
-            <div class="flex">
-                <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ url('/') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
-                    </a>
+            <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full bg-white p-1 flex items-center justify-center">
+                    <img src="{{ asset('images/PNG Host.png') }}" alt="Logo" class="w-10 h-10 object-cover rounded-full">
+                </div>
+                <div class="ms-3 hidden md:block">
+                    <h1 class="font-bold text-lg text-white">คลินิก จองคิวผู้เข้ารับบริการ</h1>
+                    <p class="text-sm text-blue-100">ระบบจองคิวออนไลน์ สำหรับผู้รับบริการ</p>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="url('/')" :active="request()->root() === url('/') && !request()->segment(1)">
+                    <x-nav-link class="text-white hover:text-blue-200" :href="url('/')" :active="request()->root() === url('/') && !request()->segment(1)">
                         หน้าแรก
                     </x-nav-link>
                     @if (auth()->user()->role === 'admin')
 
-    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-        {{ __('Dashboard') }}
+    <x-nav-link class="text-white hover:text-blue-200" :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+       Dashboard
     </x-nav-link>
 
-    <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
+    <x-nav-link class="text-white hover:text-blue-200" :href="route('users.index')" :active="request()->routeIs('users.index')">
         จัดการข้อมูลผู้ใช้
     </x-nav-link>
 
-    <x-nav-link :href="route('doctor.schedule')" :active="request()->routeIs('doctor.schedule')">
+    <x-nav-link class="text-white hover:text-blue-200" :href="route('doctor.schedule')" :active="request()->routeIs('doctor.schedule')">
         จัดตารางการทำงานของหมอ
     </x-nav-link>
 
-    <!-- รายงาน (Hover) -->
-    <div class="relative group">
-        <button
-            class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none">
+    <!-- รายงาน (Hover Dropdown) -->
+    <div class="relative group flex items-center h-full">
+        <button class="inline-flex items-center px-1 pt-1 text-sm font-medium text-white hover:text-blue-200 focus:outline-none transition">
             รายงาน
             <svg class="ml-1 h-4 w-4 fill-current" viewBox="0 0 20 20">
                 <path fill-rule="evenodd"
@@ -41,19 +44,28 @@
             </svg>
         </button>
 
-        <div
-            class="absolute left-0 mt-2 w-64 bg-white border border-gray-200 rounded-md shadow-lg
-                   opacity-0 invisible group-hover:opacity-100 group-hover:visible
-                   transition-all duration-150 z-50">
-
-            <a href="{{ route('report.users.pdf') }}"
-               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        <div class="absolute left-0 top-full mt-0 w-64 bg-white border border-gray-200 rounded-md shadow-lg
+                    opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                    transition-all duration-200 z-50">
+            <a href="{{ route('report.users.pdf') }}" target="_blank"
+               class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 border-b">
+                <span class="text-blue-500">📄</span>
                 รายงานบัญชีผู้ใช้ (PDF)
             </a>
-
-            <a href="{{ route('report.service.pdf') }}"
-               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+            <a href="{{ route('report.service.pdf') }}" target="_blank"
+               class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-green-50 border-b">
+                <span class="text-green-500">📋</span>
                 รายงานผู้เข้ารับบริการ (PDF)
+            </a>
+            <a href="{{ route('report.booking-summary') }}" target="_blank"
+               class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 border-b">
+                <span class="text-blue-500">📄</span>
+                รายงานสรุปการจองคิว (PDF)
+            </a>
+            <a href="{{ route('report.booking-history') }}" target="_blank"
+               class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-green-50">
+                <span class="text-green-500">📋</span>
+                รายงานประวัติการจองคิว (PDF)
             </a>
         </div>
     </div>
@@ -61,7 +73,7 @@
 @endif
 
                     @if (strtolower(Auth::user()->role ?? '') === 'patient')
-                        <x-nav-link :href="route('queue.book')" :active="request()->routeIs('queue.book')">
+                        <x-nav-link class="{{ $navLinkClass }}" :href="route('queue.book')" :active="request()->routeIs('queue.book')">
                             จองคิว
                         </x-nav-link>
                         <x-nav-link :href="route('queue.my')" :active="request()->routeIs('queue.my')">
