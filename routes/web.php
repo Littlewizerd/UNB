@@ -22,6 +22,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/queue/book', [QueueController::class, 'book'])->name('queue.book'); // หน้าจองคิว
+    Route::get('/queue/booking-table', [QueueController::class, 'bookingTable'])->name('queue.booking-table'); // ตารางจองคิว
     Route::get('/queue/my', [QueueController::class, 'myQueue'])->name('queue.my'); // สถานะคิวของตนเอง
     Route::get('/queue/current', [QueueController::class, 'currentQueue'])->name('queue.current'); // ลำดับคิวปัจจุบัน
     Route::get('/queue/history', [QueueController::class, 'history'])->name('queue.history'); // ประวัติ + ดาวน์โหลด PDF
@@ -35,6 +36,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/doctor/report', [ReportController::class, 'doctorReport'])->name('doctor.report.pdf'); // ออกรายงาน PDF
     Route::get('/admin/doctor/schedule', [DoctorScheduleController::class, 'index'])
         ->name('doctor.schedule');
+    Route::get('/doctor_schedules/create', [DoctorScheduleController::class, 'create'])
+        ->name('doctor_schedules.create');
+    Route::post('/doctor_schedules', [DoctorScheduleController::class, 'store'])
+        ->name('doctor_schedules.store');
+    Route::get('/doctor_schedules/{id}/edit', [DoctorScheduleController::class, 'edit'])
+        ->name('doctor_schedules.edit');
+    Route::put('/doctor_schedules/{id}', [DoctorScheduleController::class, 'update'])
+        ->name('doctor_schedules.update');
+    Route::delete('/doctor_schedules/{id}', [DoctorScheduleController::class, 'destroy'])
+        ->name('doctor_schedules.destroy');
 
     Route::get('/admin/report/users/pdf', [ReportController::class, 'usersPdf'])
         ->name('report.users.pdf');

@@ -28,7 +28,7 @@
                     </a>
 
                     <!-- Icon 2: Profile/Queue -->
-                    <a href="@auth{{ url('/booking') }}@else{{ route('login') }}@endauth" class="flex flex-col items-center text-center hover:transform hover:scale-110 transition duration-300 cursor-pointer group">
+                    <a href="@auth{{ route('queue.booking-table') }}@else{{ route('login') }}@endauth" class="flex flex-col items-center text-center hover:transform hover:scale-110 transition duration-300 cursor-pointer group">
                         <div class="w-28 h-28 md:w-32 md:h-32 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl flex items-center justify-center mb-4 shadow-md group-hover:shadow-xl group-hover:from-blue-100 group-hover:to-blue-200 transition duration-300">
                             <svg class="w-14 h-14 md:w-16 md:h-16 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
