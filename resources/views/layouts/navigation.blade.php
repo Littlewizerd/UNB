@@ -10,8 +10,8 @@
                     <img src="{{ asset('images/PNG Host.png') }}" alt="Logo" class="w-10 h-10 object-cover rounded-full">
                 </div>
                 <div class="ms-3 hidden md:block">
-                    <h1 class="font-bold text-lg text-white">คลินิก จองคิวผู้เข้ารับบริการ</h1>
-                    <p class="text-sm text-blue-100">ระบบจองคิวออนไลน์ สำหรับผู้รับบริการ</p>
+                    <h1 class="font-bold text-lg text-white">ระบบตรวจสอบเวลาเรียน</h1>
+                    <p class="text-sm text-blue-100">Attendance Management System</p>
                 </div>
 
                 <!-- Navigation Links -->
@@ -24,12 +24,20 @@
                             Dashboard
                         </x-nav-link>
 
-                        <x-nav-link class="text-white hover:text-blue-200" :href="route('users.index')" :active="request()->routeIs('users.index')">
-                            จัดการข้อมูลผู้ใช้
+                        <x-nav-link class="text-white hover:text-blue-200" :href="route('classes.index')" :active="request()->routeIs('classes.index')">
+                            จัดการชั้นเรียน
                         </x-nav-link>
 
-                        <x-nav-link class="text-white hover:text-blue-200" :href="route('doctor.schedule')" :active="request()->routeIs('doctor.schedule')">
-                            จัดตารางการทำงานของหมอ
+                        <x-nav-link class="text-white hover:text-blue-200" :href="route('students.index')" :active="request()->routeIs('students.index')">
+                            จัดการนักเรียน
+                        </x-nav-link>
+
+                        <x-nav-link class="text-white hover:text-blue-200" :href="route('teachers.index')" :active="request()->routeIs('teachers.index')">
+                            จัดการครู
+                        </x-nav-link>
+
+                        <x-nav-link class="text-white hover:text-blue-200" :href="route('subjects.index')" :active="request()->routeIs('subjects.index')">
+                            จัดการวิชา
                         </x-nav-link>
 
                         <!-- รายงาน (Hover Dropdown) -->
@@ -46,70 +54,35 @@
                             <div class="absolute left-0 top-full mt-0 w-64 bg-white border border-gray-200 rounded-md shadow-lg
                                         opacity-0 invisible group-hover:opacity-100 group-hover:visible
                                         transition-all duration-200 z-50">
-                                <a href="{{ route('report.users.pdf') }}" target="_blank"
+                                <a href="{{ route('reports.dailySummary') }}" target="_blank"
                                    class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 border-b">
                                     <span class="text-blue-500">📄</span>
-                                    รายงานบัญชีผู้ใช้ (PDF)
+                                    สรุปประจำวัน
                                 </a>
-                                <a href="{{ route('report.service.pdf') }}" target="_blank"
-                                   class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-green-50 border-b">
-                                    <span class="text-green-500">📋</span>
-                                    รายงานผู้เข้ารับบริการ (PDF)
-                                </a>
-                                <a href="{{ route('report.booking-summary') }}" target="_blank"
-                                   class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 border-b">
-                                    <span class="text-blue-500">📄</span>
-                                    รายงานสรุปการจองคิว (PDF)
-                                </a>
-                                <a href="{{ route('report.booking-history') }}" target="_blank"
+                                <a href="{{ route('reports.riskReport') }}" target="_blank"
                                    class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-green-50">
                                     <span class="text-green-500">📋</span>
-                                    รายงานประวัติการจองคิว (PDF)
+                                    รายงานเสี่ยง
                                 </a>
                             </div>
                         </div>
                     @endif
 
-                    @if (strtolower(Auth::user()->role ?? '') === 'patient')
-                        <x-nav-link class="{{ $navLinkClass }}" :href="route('queue.book')" :active="request()->routeIs('queue.book')">
-                            จองคิว
+                    @if (strtolower(Auth::user()->role ?? '') === 'student')
+                        <x-nav-link class="{{ $navLinkClass }}" :href="route('attendance.check-in')" :active="request()->routeIs('attendance.check-in')">
+                            ลงเวลา
                         </x-nav-link>
-                        <x-nav-link :href="route('queue.my')" :active="request()->routeIs('queue.my')">
-                            สถานะคิวของฉัน
-                        </x-nav-link>
-                        <x-nav-link :href="route('queue.current')" :active="request()->routeIs('queue.current')">
-                            ลำดับคิวปัจจุบัน
-                        </x-nav-link>
-                        <x-nav-link :href="route('queue.history')" :active="request()->routeIs('queue.history')">
-                            ประวัติการจอง
+                        <x-nav-link :href="route('attendance.history')" :active="request()->routeIs('attendance.history')">
+                            ประวัติการเข้าเรียน
                         </x-nav-link>
                     @endif
-                    @if (strtolower(Auth::user()->role ?? '') === 'staff')
-                        <x-nav-link :href="route('staff.dashboard')" :active="request()->routeIs('staff.dashboard')">
-                            Dashboard สรุปคิว
+                    
+                    @if (strtolower(Auth::user()->role ?? '') === 'teacher')
+                        <x-nav-link :href="route('teacher.record')" :active="request()->routeIs('teacher.record')">
+                            บันทึกการเข้าเรียน
                         </x-nav-link>
-                        <x-nav-link :href="route('queue.manage')" :active="request()->routeIs('queue.manage')">
-                            จัดการคิว
-                        </x-nav-link>
-                        <x-nav-link :href="route('queue.call')" :active="request()->routeIs('queue.call')">
-                            เรียกและอัพเดทคิว
-                        </x-nav-link>
-                        <x-nav-link :href="route('report.daily')" :active="request()->routeIs('report.daily')">
-                            รายงานประจำวัน (PDF)
-                        </x-nav-link>
-                    @endif
-                    @if (strtolower(Auth::user()->role ?? '') === 'doctor')
-                        <x-nav-link :href="route('doctor.queue.list')" :active="request()->routeIs('doctor.queue.list')">
-                            รายการคิวผู้ป่วยและค้นหา
-                        </x-nav-link>
-                        <x-nav-link :href="route('doctor.patient.record')" :active="request()->routeIs('doctor.patient.record')">
-                            บันทึกข้อมูลผู้ป่วยเบื้องต้น
-                        </x-nav-link>
-                        <x-nav-link :href="route('doctor.patient.history')" :active="request()->routeIs('doctor.patient.history')">
-                            ประวัติผู้รับบริการ
-                        </x-nav-link>
-                        <x-nav-link :href="route('doctor.report.pdf')" :active="request()->routeIs('doctor.report.pdf')">
-                            รายงานผู้เข้ารับบริการ (PDF)
+                        <x-nav-link :href="route('reports.dailySummary')" :active="request()->routeIs('reports.dailySummary')">
+                            รายงานสรุปประจำวัน
                         </x-nav-link>
                     @endif
                 </div>

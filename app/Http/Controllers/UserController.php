@@ -43,8 +43,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'role' => ['required', Rule::in(['Patient', 'Staff', 'admin' ,'Doctor'])],
-            'status' => ['required', Rule::in(['active', 'inactive', 'banned'])],
+            'role' => ['required', Rule::in(['student', 'teacher', 'admin'])],
         ]);
 
         User::create([
@@ -52,10 +51,9 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => bcrypt($request->password),
             'role' => $request->role,
-            'status' => $request->status,
         ]);
 
-        return redirect()->route('users.index')->with('success', 'User created successfully.');
+        return redirect()->route('users.index')->with('success', 'สร้างผู้ใช้สำเร็จ');
     }
 
     /**
@@ -82,15 +80,13 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role' => ['required', Rule::in(['Patient', 'Staff', 'admin' ,'Doctor'])],
-            'status' => ['required', Rule::in(['active', 'inactive', 'banned'])],
-            'password' => 'nullable|string|min:6|confirmed', // อนุญาตให้ว่างถ้าไม่ต้องการเปลี่ยน
+            'role' => ['required', Rule::in(['student', 'teacher', 'admin'])],
+            'password' => 'nullable|string|min:6|confirmed',
         ]);
 
         $user->name = $request->name;
         $user->email = $request->email;
         $user->role = $request->role;
-        $user->status = $request->status;
 
         if ($request->filled('password')) {
             $user->password = bcrypt($request->password);
@@ -98,7 +94,7 @@ class UserController extends Controller
 
         $user->save();
 
-        return redirect()->route('users.index')->with('success', 'User updated successfully.');
+        return redirect()->route('users.index')->with('success', 'อัปเดตผู้ใช้สำเร็จ');
     }
 
     /**

@@ -1,13 +1,14 @@
 <?php
 
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DoctorScheduleController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\ClassController;
+use App\Http\Controllers\StudentController;
+use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\ReportController;
-use App\Http\Controllers\QueueController;
-use App\Http\Controllers\StaffController;
-use App\Http\Controllers\DoctorController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
@@ -18,49 +19,54 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::get('/queue/book', [QueueController::class, 'book'])->name('queue.book'); // หน้าจองคิว
-    Route::get('/queue/booking-table', [QueueController::class, 'bookingTable'])->name('queue.booking-table'); // ตารางจองคิว
-    Route::get('/queue/my', [QueueController::class, 'myQueue'])->name('queue.my'); // สถานะคิวของตนเอง
-    Route::get('/queue/current', [QueueController::class, 'currentQueue'])->name('queue.current'); // ลำดับคิวปัจจุบัน
-    Route::get('/queue/history', [QueueController::class, 'history'])->name('queue.history'); // ประวัติ + ดาวน์โหลด PDF
-    Route::get('/staff/dashboard', [StaffController::class, 'dashboard'])->name('staff.dashboard'); // สรุปคิวปัจจุบัน + สถิติ + ข้อมูลผู้รับบริการ
-    Route::get('/queue/manage', [QueueController::class, 'manage'])->name('queue.manage'); // จัดการคิว (เพิ่ม/แก้ไข/ลบ/ค้นหา)
-    Route::get('/queue/call', [QueueController::class, 'call'])->name('queue.call'); // เรียกคิว / ข้ามคิว / ปิดคิว / อัพเดทสถานะ
-    Route::get('/report/daily', [ReportController::class, 'daily'])->name('report.daily'); // ออกรายงาน PDF ประจำวัน
-    Route::get('/doctor/queue', [DoctorController::class, 'queueList'])->name('doctor.queue.list'); // ดูและค้นหารายการคิว
-    Route::get('/doctor/patient/record', [DoctorController::class, 'recordPatient'])->name('doctor.patient.record'); // บันทึกข้อมูลเบื้องต้น
-    Route::get('/doctor/patient/history', [DoctorController::class, 'patientHistory'])->name('doctor.patient.history'); // ดูประวัติผู้รับบริการ
-    Route::get('/doctor/report', [ReportController::class, 'doctorReport'])->name('doctor.report.pdf'); // ออกรายงาน PDF
-    Route::get('/admin/doctor/schedule', [DoctorScheduleController::class, 'index'])
-        ->name('doctor.schedule');
-    Route::get('/doctor_schedules/create', [DoctorScheduleController::class, 'create'])
-        ->name('doctor_schedules.create');
-    Route::post('/doctor_schedules', [DoctorScheduleController::class, 'store'])
-        ->name('doctor_schedules.store');
-    Route::get('/doctor_schedules/{id}/edit', [DoctorScheduleController::class, 'edit'])
-        ->name('doctor_schedules.edit');
-    Route::put('/doctor_schedules/{id}', [DoctorScheduleController::class, 'update'])
-        ->name('doctor_schedules.update');
-    Route::delete('/doctor_schedules/{id}', [DoctorScheduleController::class, 'destroy'])
-        ->name('doctor_schedules.destroy');
 
-    Route::get('/admin/report/users/pdf', [ReportController::class, 'usersPdf'])
-        ->name('report.users.pdf');
+    // ===== Attendance Routes (นักเรียน) =====
+    Route::prefix('attendance')->name('attendance.')->group(function () {
+        Route::get('/check-in', [AttendanceController::class, 'checkIn'])->name('check-in');
+        Route::post('/store', [AttendanceController::class, 'store'])->name('store');
+        Route::get('/history', [AttendanceController::class, 'history'])->name('history');
+        Route::get('/statistics/{student}', [AttendanceController::class, 'statistics'])->name('statistics');
+    });
 
-    Route::get('/admin/report/services/pdf', [ReportController::class, 'servicesPdf'])
-        ->name('report.service.pdf');
+    // ===== Attendance Routes (ครู) =====
+    Route::prefix('teacher')->name('teacher.')->group(function () {
+        Route::get('/record', [AttendanceController::class, 'recordByTeacher'])->name('record');
+        Route::post('/record-attendance', [AttendanceController::class, 'recordAttendanceByTeacher'])->name('record-attendance');
+    });
 
-    Route::get('/report/booking-summary', [ReportController::class, 'bookingSummary'])->name('report.booking-summary');
-    Route::get('/report/booking-history', [ReportController::class, 'bookingHistory'])->name('report.booking-history');
+    // ===== Classes Management =====
+    Route::resource('classes', ClassController::class);
+
+    // ===== Students Management =====
+    Route::resource('students', StudentController::class);
+    Route::get('/students/search', [StudentController::class, 'search'])->name('students.search');
+
+    // ===== Teachers Management =====
+    Route::resource('teachers', TeacherController::class);
+    Route::get('/teachers/search', [TeacherController::class, 'search'])->name('teachers.search');
+
+    // ===== Subjects Management =====
+    Route::resource('subjects', SubjectController::class);
+
+    // ===== User Management (Admin Only) =====
+    Route::middleware('is_admin')->group(function () {
+        Route::resource('users', UserController::class);
+    });
+
+    // ===== Reports =====
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/daily-summary', [ReportController::class, 'dailySummary'])->name('dailySummary');
+        Route::get('/class/{class}', [ReportController::class, 'classReport'])->name('classReport');
+        Route::get('/class/{class}/pdf', [ReportController::class, 'classReportPdf'])->name('classReportPdf');
+        Route::get('/subject/{subject}', [ReportController::class, 'subjectReport'])->name('subjectReport');
+        Route::get('/student/{student}', [ReportController::class, 'individualReport'])->name('individualReport');
+        Route::get('/student/{student}/pdf', [ReportController::class, 'individualReportPdf'])->name('individualReportPdf');
+        Route::get('/risk-report', [ReportController::class, 'riskReport'])->name('riskReport');
+    });
 });
 
-Route::get('/users', [UserController::class, 'index'])->name('users.index');
-Route::get('/users/create', [UserController::class, 'create'])->name('users.create'); 
-Route::post('/users', [UserController::class, 'store'])->name('users.store');
-Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit'); 
-Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update'); 
-Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 require __DIR__.'/auth.php';

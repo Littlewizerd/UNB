@@ -27,24 +27,24 @@
                         <h3 class="font-bold text-gray-700 text-base md:text-lg group-hover:text-blue-600 transition">หน้าหลัก</h3>
                     </a>
 
-                    <!-- Icon 2: Profile/Queue -->
-                    <a href="@auth{{ route('queue.booking-table') }}@else{{ route('login') }}@endauth" class="flex flex-col items-center text-center hover:transform hover:scale-110 transition duration-300 cursor-pointer group">
+                    <!-- Icon 2: Attendance -->
+                    <a href="@auth{{ route('attendance.check-in') }}@else{{ route('login') }}@endauth" class="flex flex-col items-center text-center hover:transform hover:scale-110 transition duration-300 cursor-pointer group">
                         <div class="w-28 h-28 md:w-32 md:h-32 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl flex items-center justify-center mb-4 shadow-md group-hover:shadow-xl group-hover:from-blue-100 group-hover:to-blue-200 transition duration-300">
                             <svg class="w-14 h-14 md:w-16 md:h-16 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                             </svg>
                         </div>
-                        <h3 class="font-bold text-gray-700 text-base md:text-lg group-hover:text-blue-600 transition">จองคิว</h3>
+                        <h3 class="font-bold text-gray-700 text-base md:text-lg group-hover:text-blue-600 transition">ลงเวลา</h3>
                     </a>
 
-                    <!-- Icon 3: Mobile/Cancel -->
-                    <a href="@auth{{ url('/booking') }}@else{{ route('login') }}@endauth" class="flex flex-col items-center text-center hover:transform hover:scale-110 transition duration-300 cursor-pointer group">
+                    <!-- Icon 3: History -->
+                    <a href="@auth{{ route('attendance.history') }}@else{{ route('login') }}@endauth" class="flex flex-col items-center text-center hover:transform hover:scale-110 transition duration-300 cursor-pointer group">
                         <div class="w-28 h-28 md:w-32 md:h-32 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl flex items-center justify-center mb-4 shadow-md group-hover:shadow-xl group-hover:from-blue-100 group-hover:to-blue-200 transition duration-300">
                             <svg class="w-14 h-14 md:w-16 md:h-16 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M15.5 1h-8C6.12 1 5 2.12 5 3.5v17C5 21.88 6.12 23 7.5 23h8c1.38 0 2.5-1.12 2.5-2.5v-17C18 2.12 16.88 1 15.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z"/>
+                                <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
                             </svg>
                         </div>
-                        <h3 class="font-bold text-gray-700 text-base md:text-lg group-hover:text-blue-600 transition">ยกเลิก</h3>
+                        <h3 class="font-bold text-gray-700 text-base md:text-lg group-hover:text-blue-600 transition">ประวัติ</h3>
                     </a>
                 </div>
             </div>
@@ -133,8 +133,8 @@
                         <div class="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-blue-300 shadow-md">
                             <img src="{{ asset('images/student2.jpg') }}" alt="ภณิชรักษ์" class="w-full h-full object-cover">
                         </div>
-                        <h3 class="font-bold text-gray-800 text-lg mb-2">นาย ภณิชรักษ์ จันเหม</h3>
-                        <p class="text-blue-700 font-semibold mb-1">รหัส: 026740491008-0</p>
+                        <h3 class="font-bold text-gray-800 text-lg mb-2">นาย นฤเบศ พึ่งกลั่น</h3>
+                        <p class="text-blue-700 font-semibold mb-1">รหัส: 026740491007-2</p>
                         <p class="text-gray-600 text-sm">สาขาวิชา: เทคโนโลยีสารสนเทศ</p>
                     </div>
 
@@ -143,8 +143,8 @@
                         <div class="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-purple-300 shadow-md">
                             <img src="{{ asset('images/student3.jpg') }}" alt="ชยากร" class="w-full h-full object-cover">
                         </div>
-                        <h3 class="font-bold text-gray-800 text-lg mb-2">นาย ชยากร เหมทานนท์</h3>
-                        <p class="text-purple-700 font-semibold mb-1">รหัส: 026740491009-8</p>
+                        <h3 class="font-bold text-gray-800 text-lg mb-2">นาย พิชชากร ประยูรวงศ์</h3>
+                        <p class="text-purple-700 font-semibold mb-1">รหัส: 026740491005-6</p>
                         <p class="text-gray-600 text-sm">สาขาวิชา: เทคโนโลยีสารสนเทศ</p>
                     </div>
                 </div>

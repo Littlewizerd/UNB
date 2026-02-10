@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
-            $table->integer('role')->default(30);
-            $table->integer('status')->default(TRUE);
+            if (!Schema::hasColumn('users', 'last_login_at')) {
+                $table->timestamp('last_login_at')->nullable()->after('updated_at');
+            }
         });
     }
 
@@ -24,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            $table->dropColumn('last_login_at');
         });
     }
 };
