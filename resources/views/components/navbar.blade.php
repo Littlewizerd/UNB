@@ -7,8 +7,8 @@
                 <img src="{{ asset('images/PNG Host.png') }}" alt="Logo" class="w-10 h-10 object-cover rounded-full">
             </div>
             <div>
-                <h1 class="font-bold text-lg">คลินิก จองคิวผู้เข้ารับบริการ</h1>
-                <p class="text-sm text-blue-100">ระบบจองคิวออนไลน์ สำหรับผู้รับบริการ</p>
+                <h1 class="font-bold text-lg">ระบบตรวจสอบเวลาเรียนนักศึกษา</h1>
+                <p class="text-sm text-blue-100">ระบบการลงเวลาเรียน สำหรับการติดตามการเข้าเรียน</p>
             </div>
         </div>
         <div class="hidden md:flex gap-6 text-sm items-center">

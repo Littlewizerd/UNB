@@ -21,7 +21,7 @@
                     </x-nav-link>
                     @if (auth()->user()->role === 'admin')
                         <x-nav-link class="text-white hover:text-blue-200" :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                            Dashboard
+                            แผงควบคุม
                         </x-nav-link>
 
                         <x-nav-link class="text-white hover:text-blue-200" :href="route('classes.index')" :active="request()->routeIs('classes.index')">
@@ -38,6 +38,14 @@
 
                         <x-nav-link class="text-white hover:text-blue-200" :href="route('subjects.index')" :active="request()->routeIs('subjects.index')">
                             จัดการวิชา
+                        </x-nav-link>
+
+                        <x-nav-link class="text-white hover:text-blue-200" :href="route('semesters.index')" :active="request()->routeIs('semesters.index')">
+                            จัดการภาคเรียน
+                        </x-nav-link>
+
+                        <x-nav-link class="text-white hover:text-blue-200" :href="route('schedules.index')" :active="request()->routeIs('schedules.index')">
+                            ตารางเรียน
                         </x-nav-link>
 
                         <!-- รายงาน (Hover Dropdown) -->
@@ -75,6 +83,9 @@
                         <x-nav-link :href="route('attendance.history')" :active="request()->routeIs('attendance.history')">
                             ประวัติการเข้าเรียน
                         </x-nav-link>
+                        <x-nav-link :href="route('schedules.student-schedule')" :active="request()->routeIs('schedules.student-schedule')">
+                            ตารางเรียนของฉัน
+                        </x-nav-link>
                     @endif
                     
                     @if (strtolower(Auth::user()->role ?? '') === 'teacher')
@@ -84,7 +95,15 @@
                         <x-nav-link :href="route('reports.dailySummary')" :active="request()->routeIs('reports.dailySummary')">
                             รายงานสรุปประจำวัน
                         </x-nav-link>
+                        <x-nav-link :href="route('schedules.teacher-schedule')" :active="request()->routeIs('schedules.teacher-schedule')">
+                            ตารางสอนของฉัน
+                        </x-nav-link>
                     @endif
+
+                    <!-- Messages for all authenticated users -->
+                    <x-nav-link class="text-white hover:text-blue-200" :href="route('messages.index')" :active="request()->routeIs('messages.index')">
+                        ✉️ ข้อความ
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -148,10 +167,31 @@
                 หน้าแรก
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
+                {{ __('แผงควบคุม') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
-                จัดการข้อมูลผู้ใช้
+            @if (auth()->user()->role === 'admin')
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
+                    จัดการข้อมูลผู้ใช้
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('semesters.index')" :active="request()->routeIs('semesters.index')">
+                    จัดการภาคเรียน
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('schedules.index')" :active="request()->routeIs('schedules.index')">
+                    ตารางเรียน
+                </x-responsive-nav-link>
+            @endif
+            @if (strtolower(auth()->user()->role ?? '') === 'student')
+                <x-responsive-nav-link :href="route('schedules.student-schedule')" :active="request()->routeIs('schedules.student-schedule')">
+                    ตารางเรียนของฉัน
+                </x-responsive-nav-link>
+            @endif
+            @if (strtolower(auth()->user()->role ?? '') === 'teacher')
+                <x-responsive-nav-link :href="route('schedules.teacher-schedule')" :active="request()->routeIs('schedules.teacher-schedule')">
+                    ตารางสอนของฉัน
+                </x-responsive-nav-link>
+            @endif
+            <x-responsive-nav-link :href="route('messages.index')" :active="request()->routeIs('messages.index')">
+                ✉️ ข้อความ
             </x-responsive-nav-link>
         </div>
         

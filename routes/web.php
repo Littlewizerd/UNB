@@ -8,6 +8,9 @@ use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\SemesterController;
+use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\MessageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -51,6 +54,34 @@ Route::middleware('auth')->group(function () {
 
     // ===== Subjects Management =====
     Route::resource('subjects', SubjectController::class);
+
+    // ===== Semesters Management (Admin Only) =====
+    Route::middleware('is_admin')->group(function () {
+        Route::resource('semesters', SemesterController::class);
+    });
+
+    // ===== Schedules Management =====
+    Route::resource('schedules', ScheduleController::class);
+    Route::get('/my-schedule', function () {
+        if (auth()->user()->role === 'teacher') {
+            return app(ScheduleController::class)->teacherSchedule();
+        } elseif (auth()->user()->role === 'student') {
+            return app(ScheduleController::class)->studentSchedule();
+        }
+    })->name('schedules.my-schedule');
+    
+    Route::get('/schedules/teacher/schedule', [ScheduleController::class, 'teacherSchedule'])->name('schedules.teacher-schedule');
+    Route::get('/schedules/student/schedule', [ScheduleController::class, 'studentSchedule'])->name('schedules.student-schedule');
+
+    // ===== Messages =====
+    Route::prefix('messages')->name('messages.')->group(function () {
+        Route::get('/', [MessageController::class, 'index'])->name('index');
+        Route::get('/create', [MessageController::class, 'create'])->name('create');
+        Route::post('/', [MessageController::class, 'store'])->name('store');
+        Route::get('/{message}', [MessageController::class, 'show'])->name('show');
+        Route::patch('/{message}/read', [MessageController::class, 'markAsRead'])->name('mark-read');
+        Route::delete('/{message}', [MessageController::class, 'destroy'])->name('destroy');
+    });
 
     // ===== User Management (Admin Only) =====
     Route::middleware('is_admin')->group(function () {

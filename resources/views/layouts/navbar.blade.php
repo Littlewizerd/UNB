@@ -85,7 +85,7 @@
         <div class="flex gap-2 mt-4 flex-col">
             @auth
                 <a href="{{ route('dashboard') }}" class="bg-blue-600 text-white px-3 py-2 rounded font-semibold text-center hover:bg-blue-700 transition">
-                    Dashboard
+                    แผงควบคุม
                 </a>
                 <span class="block py-2 text-sm">{{ Auth::user()->name }}</span>
                 <form method="POST" action="{{ route('logout') }}">

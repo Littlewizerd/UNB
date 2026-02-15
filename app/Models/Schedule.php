@@ -11,7 +11,7 @@ class Schedule extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['class_id', 'subject_id', 'teacher_id', 'day_of_week', 'start_time', 'end_time', 'room', 'semester', 'academic_year'];
+    protected $fillable = ['class_id', 'subject_id', 'teacher_id', 'day_of_week', 'start_time', 'end_time', 'room', 'semester', 'academic_year', 'semester_id'];
     protected $casts = ['created_at' => 'datetime', 'updated_at' => 'datetime'];
 
     // วันในสัปดาห์
@@ -47,6 +47,14 @@ class Schedule extends Model
     public function teacher(): BelongsTo
     {
         return $this->belongsTo(Teacher::class);
+    }
+
+    /**
+     * ความสัมพันธ์กับภาคเรียน
+     */
+    public function semesterData(): BelongsTo
+    {
+        return $this->belongsTo(Semester::class, 'semester_id');
     }
 
     /**
