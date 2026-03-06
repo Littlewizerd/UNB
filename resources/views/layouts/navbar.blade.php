@@ -24,11 +24,8 @@
                     รายงาน ▼
                 </button>
                 <div class="absolute hidden group-hover:block bg-white text-gray-800 rounded shadow-lg mt-2 w-56 z-50 right-0">
-                    <a href="{{ route('report.booking-summary') }}" target="_blank" class="block px-4 py-2 hover:bg-gray-100 border-b">
-                        📄 รายงาน สรุปการจองคิว (PDF)
-                    </a>
-                    <a href="{{ route('report.booking-history') }}" target="_blank" class="block px-4 py-2 hover:bg-gray-100">
-                        📋 รายงาน ประวัติการจองคิว (PDF)
+                    <a href="{{ route('reports.dailySummary') }}" target="_blank" class="block px-4 py-2 hover:bg-gray-100 border-b">
+                        📄 รายงานสรุปประจำวัน
                     </a>
                 </div>
             </div>
@@ -73,11 +70,8 @@
         
         @auth
         <div class="mt-2 border-t border-green-500 pt-2">
-            <a href="{{ route('report.booking-summary') }}" target="_blank" class="block py-2 hover:text-green-200">
-                📄 รายงาน สรุปการจองคิว (PDF)
-            </a>
-            <a href="{{ route('report.booking-history') }}" target="_blank" class="block py-2 hover:text-green-200">
-                📋 รายงาน ประวัติการจองคิว (PDF)
+            <a href="{{ route('reports.dailySummary') }}" target="_blank" class="block py-2 hover:text-green-200">
+                📄 รายงานสรุปประจำวัน
             </a>
         </div>
         @endauth
@@ -112,4 +106,3 @@
         menu.classList.toggle('hidden');
     }
 </script>
-s

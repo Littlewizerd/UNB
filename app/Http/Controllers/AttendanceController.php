@@ -13,71 +13,12 @@ use Carbon\Carbon;
 class AttendanceController extends Controller
 {
     /**
-     * หน้าสำหรับนักเรียนลงเวลาเข้าเรียน
+     * แปลงวันในสัปดาห์เป็นรหัสตาราง
      */
-    public function checkIn()
+    private function getTodayDayCode(): string
     {
-        $student = Auth::user();
-        $today = Carbon::today();
-        
-        // ตารางเรียนวันนี้
-        $schedules = Schedule::where('class_id', $student->class_id)
-            ->whereDate('created_at', $today)
-            ->get();
-
-        return view('attendance.check-in', compact('schedules'));
-    }
-
-    /**
-     * บันทึกการเข้าเรียนของนักเรียน
-     */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'schedule_id' => 'required|exists:schedules,id',
-            'check_in_time' => 'nullable|date_format:H:i',
-            'check_out_time' => 'nullable|date_format:H:i'
-        ]);
-
-        $schedule = Schedule::findOrFail($validated['schedule_id']);
-        $student = Auth::user();
-        
-        // ตรวจสอบว่ามีบันทึกแล้วหรือไม่
-        $attendance = Attendance::firstOrCreate(
-            [
-                'student_id' => $student->id,
-                'schedule_id' => $schedule->id,
-                'attendance_date' => Carbon::today()
-            ],
-            [
-                'subject_id' => $schedule->subject_id,
-                'check_in_time' => $validated['check_in_time'],
-                'check_out_time' => $validated['check_out_time'],
-                'status' => $this->determineStatus($schedule, $validated['check_in_time'])
-            ]
-        );
-
-        // อัปเดตเวลาออก
-        if ($validated['check_out_time']) {
-            $attendance->update(['check_out_time' => $validated['check_out_time']]);
-        }
-
-        return redirect()->route('attendance.history')
-            ->with('success', 'บันทึกการลงเวลาสำเร็จ');
-    }
-
-    /**
-     * ประวัติการเข้าเรียนของนักเรียน
-     */
-    public function history()
-    {
-        $student = Auth::user();
-        $attendances = Attendance::where('student_id', $student->id)
-            ->with(['schedule.subject', 'schedule.studentClass'])
-            ->orderBy('attendance_date', 'desc')
-            ->paginate(15);
-
-        return view('attendance.history', compact('attendances'));
+        $map = [1 => 'M', 2 => 'T', 3 => 'W', 4 => 'TH', 5 => 'F', 6 => 'SA', 0 => 'SU'];
+        return $map[Carbon::today()->dayOfWeek] ?? 'M';
     }
 
     /**
@@ -86,14 +27,23 @@ class AttendanceController extends Controller
     public function recordByTeacher()
     {
         $teacher = Auth::user();
-        
-        // ตารางเรียนของครูวันนี้
+        $today = Carbon::today();
+        $dayCode = $this->getTodayDayCode();
+
+        // ตารางสอนของครูวันนี้ (จับคู่ day_of_week กับวันจริง)
         $schedules = Schedule::where('teacher_id', $teacher->id)
-            ->whereDate('created_at', Carbon::today())
-            ->with('studentClass')
+            ->where('day_of_week', $dayCode)
+            ->with(['subject', 'studentClass.students'])
+            ->orderBy('start_time')
             ->get();
 
-        return view('attendance.teacher-record', compact('schedules'));
+        // ดึงข้อมูลการลงเวลาที่บันทึกไว้แล้ววันนี้
+        $todayAttendances = Attendance::whereDate('attendance_date', $today)
+            ->whereIn('schedule_id', $schedules->pluck('id'))
+            ->get()
+            ->groupBy('schedule_id');
+
+        return view('attendance.teacher-record', compact('schedules', 'todayAttendances', 'teacher'));
     }
 
     /**
@@ -105,14 +55,29 @@ class AttendanceController extends Controller
             'schedule_id' => 'required|exists:schedules,id',
             'attendances' => 'required|array',
             'attendances.*.student_id' => 'required|exists:users,id',
-            'attendances.*.status' => 'required|in:present,absent,late,excused'
+            'attendances.*.status' => 'required|in:present,absent,late,excused',
+            'attendances.*.notes' => 'nullable|string|max:255'
         ]);
 
         $schedule = Schedule::findOrFail($validated['schedule_id']);
         $teacher = Auth::user();
 
+        $count = 0;
         // บันทึกสถานะการเข้าเรียนสำหรับนักเรียนแต่ละคน
         foreach ($validated['attendances'] as $attendance) {
+            $status = $attendance['status'];
+
+            // กำหนดเวลาเข้า-ออกอัตโนมัติ
+            $checkInTime = null;
+            $checkOutTime = null;
+            if ($status === 'present') {
+                $checkInTime = $schedule->start_time;   // มาปกติ = เวลาเริ่มเรียน
+                $checkOutTime = $schedule->end_time;
+            } elseif ($status === 'late') {
+                $checkInTime = null;                    // มาสาย = ไม่ทราบเวลาแน่ชัด
+                $checkOutTime = $schedule->end_time;
+            }
+
             Attendance::updateOrCreate(
                 [
                     'student_id' => $attendance['student_id'],
@@ -121,13 +86,17 @@ class AttendanceController extends Controller
                 ],
                 [
                     'subject_id' => $schedule->subject_id,
-                    'status' => $attendance['status'],
+                    'status' => $status,
+                    'check_in_time'  => $checkInTime,
+                    'check_out_time' => $checkOutTime,
+                    'notes' => $attendance['notes'] ?? null,
                     'recorded_by' => $teacher->id
                 ]
             );
+            $count++;
         }
 
-        return redirect()->back()->with('success', 'บันทึกการเข้าเรียนสำเร็จ');
+        return redirect()->back()->with('success', "บันทึกการเข้าเรียนสำเร็จ ({$count} คน)");
     }
 
     /**
@@ -154,6 +123,13 @@ class AttendanceController extends Controller
      */
     public function statistics(Student $student)
     {
+        $user = Auth::user();
+        $role = strtolower((string) $user->role);
+
+        if (!in_array($role, ['admin', 'teacher'], true)) {
+            abort(403, 'ไม่มีสิทธิ์เข้าถึงสถิติของนักศึกษารายนี้');
+        }
+
         $stats = [
             'present' => Attendance::where('student_id', $student->id)->where('status', Attendance::STATUS_PRESENT)->count(),
             'absent' => Attendance::where('student_id', $student->id)->where('status', Attendance::STATUS_ABSENT)->count(),

@@ -51,7 +51,7 @@
                                 id="role" name="role" required>
                             <option value="">-- เลือกบทบาท --</option>
                             <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>ผู้ดูแลระบบ</option>
-                            <option value="teacher" {{ old('role') == 'teacher' ? 'selected' : '' }}>ครู</option>
+                            <option value="teacher" {{ old('role') == 'teacher' ? 'selected' : '' }}>อาจารย์</option>
                             <option value="student" {{ old('role') == 'student' ? 'selected' : '' }}>นักเรียน</option>
                         </select>
                         @error('role')

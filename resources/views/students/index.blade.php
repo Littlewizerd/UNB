@@ -4,7 +4,9 @@
 <div class="container">
     <h1 class="my-4">จัดการนักเรียน</h1>
 
-    <a href="{{ route('students.create') }}" class="btn btn-primary mb-3">+ เพิ่มนักเรียนใหม่</a>
+    @if(auth()->user()->role === 'admin')
+        <a href="{{ route('students.create') }}" class="btn btn-primary mb-3">+ เพิ่มนักเรียนใหม่</a>
+    @endif
 
     <div class="card">
         <div class="card-header">
@@ -33,11 +35,13 @@
                                 <td>{{ $student->phone ?? '-' }}</td>
                                 <td>
                                     <a href="{{ route('students.show', $student) }}" class="btn btn-info btn-sm">ดู</a>
-                                    <a href="{{ route('students.edit', $student) }}" class="btn btn-warning btn-sm">แก้ไข</a>
-                                    <form action="{{ route('students.destroy', $student) }}" method="POST" style="display:inline;">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('ยืนยันการลบ?')">ลบ</button>
-                                    </form>
+                                    @if(auth()->user()->role === 'admin')
+                                        <a href="{{ route('students.edit', $student) }}" class="btn btn-warning btn-sm">แก้ไข</a>
+                                        <form action="{{ route('students.destroy', $student) }}" method="POST" style="display:inline;">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('ยืนยันการลบ?')">ลบ</button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

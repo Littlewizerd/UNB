@@ -39,9 +39,36 @@
         </div>
     </div>
 
+    {{-- ดูรายงานตามห้องเรียน / รายวิชา (เชื่อมต่อ p13: ส่งออกรายงาน PDF) --}}
+    <div class="row mb-4">
+        @if(isset($teacherClasses) && $teacherClasses->count() > 0)
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📋 รายงานตามห้องเรียน</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        @foreach($teacherClasses as $class)
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>{{ $class->class_name }} ({{ $class->class_code }})</span>
+                                <div>
+                                    <a href="{{ route('reports.classReport', $class) }}" class="btn btn-sm btn-outline-primary">ดูรายงาน</a>
+                                    <a href="{{ route('reports.classReportPdf', $class) }}" class="btn btn-sm btn-success" target="_blank">📥 PDF</a>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+    </div>
+
     <div class="card">
         <div class="card-header">
-            <h5 class="mb-0">รายละเอียด</h5>
+            <h5 class="mb-0">รายละเอียดการเข้าเรียนวันนี้</h5>
         </div>
         <div class="card-body">
             @if($attendances->count() > 0)
@@ -52,6 +79,7 @@
                             <th>ชั้นเรียน</th>
                             <th>วิชา</th>
                             <th>เวลาเข้า</th>
+                            <th>เวลาออก</th>
                             <th>สถานะ</th>
                         </tr>
                     </thead>
@@ -61,7 +89,8 @@
                                 <td>{{ $record->student->name }}</td>
                                 <td>{{ $record->student->studentClass->class_name ?? '-' }}</td>
                                 <td>{{ $record->subject->name ?? '-' }}</td>
-                                <td>{{ $record->check_in_time ?? '-' }}</td>
+                                <td>{{ $record->check_in_time ? \Carbon\Carbon::parse($record->check_in_time)->format('H:i') : '-' }}</td>
+                                <td>{{ $record->check_out_time ? \Carbon\Carbon::parse($record->check_out_time)->format('H:i') : '-' }}</td>
                                 <td>
                                     @php
                                         $statusClass = match($record->status) {

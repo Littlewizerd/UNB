@@ -98,8 +98,16 @@
                             <label for="start_time" class="block text-sm font-semibold text-gray-700 mb-2">
                                 เวลาเริ่ม <span class="text-red-600">*</span>
                             </label>
-                            <input type="time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('start_time') border-red-500 @enderror" 
-                                   id="start_time" name="start_time" value="{{ old('start_time') }}" required>
+                            <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('start_time') border-red-500 @enderror"
+                                    id="start_time" name="start_time" required>
+                                <option value="">-- เลือกเวลา --</option>
+                                @for ($h = 7; $h <= 22; $h++)
+                                    @foreach (['00', '30'] as $m)
+                                        @php $t = str_pad($h, 2, '0', STR_PAD_LEFT) . ':' . $m; @endphp
+                                        <option value="{{ $t }}" {{ old('start_time') == $t ? 'selected' : '' }}>{{ $t }} น.</option>
+                                    @endforeach
+                                @endfor
+                            </select>
                             @error('start_time')
                                 <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                             @enderror
@@ -109,8 +117,16 @@
                             <label for="end_time" class="block text-sm font-semibold text-gray-700 mb-2">
                                 เวลาสิ้นสุด <span class="text-red-600">*</span>
                             </label>
-                            <input type="time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('end_time') border-red-500 @enderror" 
-                                   id="end_time" name="end_time" value="{{ old('end_time') }}" required>
+                            <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('end_time') border-red-500 @enderror"
+                                    id="end_time" name="end_time" required>
+                                <option value="">-- เลือกเวลา --</option>
+                                @for ($h = 7; $h <= 22; $h++)
+                                    @foreach (['00', '30'] as $m)
+                                        @php $t = str_pad($h, 2, '0', STR_PAD_LEFT) . ':' . $m; @endphp
+                                        <option value="{{ $t }}" {{ old('end_time') == $t ? 'selected' : '' }}>{{ $t }} น.</option>
+                                    @endforeach
+                                @endfor
+                            </select>
                             @error('end_time')
                                 <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                             @enderror
@@ -124,6 +140,23 @@
                         <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('room') border-red-500 @enderror" 
                                id="room" name="room" value="{{ old('room') }}" placeholder="เช่น 305">
                         @error('room')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="semester_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                            ภาคเรียน / ปีการศึกษา <span class="text-red-600">*</span>
+                        </label>
+                        <select id="semester_id" name="semester_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('semester_id') border-red-500 @enderror" required>
+                            <option value="">-- เลือกภาคเรียน --</option>
+                            @foreach($semesters as $sem)
+                                <option value="{{ $sem->id }}" {{ old('semester_id') == $sem->id ? 'selected' : '' }}>
+                                    {{ $sem->name }} (พ.ศ. {{ $sem->year }})
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('semester_id')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
                     </div>

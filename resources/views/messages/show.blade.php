@@ -7,6 +7,7 @@
                     <div>
                         <h1 class="text-3xl font-bold text-gray-800">{{ $message->subject ?? 'ไม่มีหัวข้อ' }}</h1>
                         <p class="text-gray-600 mt-2">จาก: <span class="font-semibold">{{ $message->sender->name }}</span></p>
+                        <p class="text-gray-600 mt-1">ถึง: <span class="font-semibold">{{ $message->recipient->name }}</span></p>
                         <p class="text-gray-500 text-sm mt-1">{{ $message->created_at->format('d/m/Y H:i') }}</p>
                     </div>
                     @if(!$message->is_read)
@@ -27,6 +28,14 @@
                 <div class="flex flex-wrap gap-3">
                     <a href="{{ route('messages.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold transition">
                         กลับไปยังข้อความ
+                    </a>
+                    @php
+                        $replyRecipient = auth()->id() === $message->sender_id ? $message->recipient_id : $message->sender_id;
+                        $replySubject = $message->subject ? (str_starts_with($message->subject, 'Re: ') ? $message->subject : 'Re: ' . $message->subject) : 'Re: ไม่มีหัวข้อ';
+                    @endphp
+                    <a href="{{ route('messages.create', ['recipient_id' => $replyRecipient, 'subject' => $replySubject]) }}"
+                       class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                        ตอบกลับ
                     </a>
                     <form action="{{ route('messages.destroy', $message) }}" method="POST" style="display:inline;" 
                           onsubmit="return confirm('ยืนยันการลบข้อความ?')">

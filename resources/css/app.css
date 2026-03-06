@@ -1,3 +1,106 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+	.container {
+		@apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+	}
+
+	.card {
+		@apply rounded-lg border border-slate-200 bg-white shadow-sm;
+	}
+
+	.card-header {
+		@apply border-b border-slate-200 bg-slate-50 px-4 py-3;
+	}
+
+	.card-body {
+		@apply p-4;
+	}
+
+	.btn {
+		@apply inline-flex items-center rounded-md px-4 py-2 text-sm font-semibold transition;
+	}
+
+	.btn-sm {
+		@apply px-3 py-1.5 text-xs;
+	}
+
+	.btn-primary {
+		@apply bg-blue-600 text-white hover:bg-blue-700;
+	}
+
+	.btn-secondary {
+		@apply bg-slate-500 text-white hover:bg-slate-600;
+	}
+
+	.btn-success {
+		@apply bg-emerald-600 text-white hover:bg-emerald-700;
+	}
+
+	.btn-warning {
+		@apply bg-amber-500 text-white hover:bg-amber-600;
+	}
+
+	.btn-danger {
+		@apply bg-red-600 text-white hover:bg-red-700;
+	}
+
+	.btn-info {
+		@apply bg-cyan-600 text-white hover:bg-cyan-700;
+	}
+
+	.form-label {
+		@apply mb-2 block text-sm font-medium text-slate-700;
+	}
+
+	.form-control,
+	.form-select {
+		@apply w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100;
+	}
+
+	.is-invalid {
+		@apply border-red-500 ring-1 ring-red-100;
+	}
+
+	.invalid-feedback {
+		@apply mt-1 text-sm text-red-600;
+	}
+
+	.alert {
+		@apply mb-4 rounded-md border px-4 py-3 text-sm;
+	}
+
+	.alert-success {
+		@apply border-emerald-200 bg-emerald-50 text-emerald-700;
+	}
+
+	.alert-danger {
+		@apply border-red-200 bg-red-50 text-red-700;
+	}
+
+	.alert-info {
+		@apply border-blue-200 bg-blue-50 text-blue-700;
+	}
+
+	.alert-warning {
+		@apply border-amber-200 bg-amber-50 text-amber-700;
+	}
+
+	.table {
+		@apply w-full border-collapse text-sm;
+	}
+
+	.table thead th {
+		@apply border-b border-slate-200 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-700;
+	}
+
+	.table tbody td {
+		@apply border-b border-slate-100 px-3 py-2 text-slate-700;
+	}
+
+	.table-striped tbody tr:nth-child(odd) {
+		@apply bg-slate-50/60;
+	}
+}

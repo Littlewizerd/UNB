@@ -16,11 +16,15 @@ class Message extends Model
         'message',
         'is_read',
         'read_at',
+        'sender_deleted_at',
+        'recipient_deleted_at',
     ];
 
     protected $casts = [
         'is_read' => 'boolean',
         'read_at' => 'datetime',
+        'sender_deleted_at' => 'datetime',
+        'recipient_deleted_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

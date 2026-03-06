@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -12,6 +13,13 @@ class Teacher extends User
 
     protected $table = 'users';
     protected $fillable = ['name', 'email', 'teacher_id', 'phone', 'department'];
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope('teacher_role', function (Builder $builder) {
+            $builder->where('role', 'teacher');
+        });
+    }
 
     /**
      * ความสัมพันธ์กับวิชาที่สอน

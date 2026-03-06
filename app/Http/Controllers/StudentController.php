@@ -4,18 +4,36 @@ namespace App\Http\Controllers;
 
 use App\Models\Student;
 use App\Models\StudentClass;
+use App\Models\Schedule;
 use App\Models\Attendance;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class StudentController extends Controller
 {
     /**
-     * แสดงรายชื่อนักเรียนทั้งหมด
+     * ดึง class_id ที่อาจารย์คนนี้สอน
+     */
+    private function getTeacherClassIds()
+    {
+        return Schedule::where('teacher_id', Auth::id())
+            ->distinct()
+            ->pluck('class_id');
+    }
+
+    /**
+     * แสดงรายชื่อนักเรียน (อาจารย์เห็นเฉพาะในรายวิชาที่สอน)
      */
     public function index()
     {
-        $students = Student::with('studentClass')
-            ->paginate(15);
+        $query = Student::with('studentClass');
+
+        if (Auth::user()->role === 'teacher') {
+            $classIds = $this->getTeacherClassIds();
+            $query->whereIn('class_id', $classIds);
+        }
+
+        $students = $query->paginate(15);
 
         return view('students.index', compact('students'));
     }
@@ -57,6 +75,8 @@ class StudentController extends Controller
      */
     public function show(Student $student)
     {
+        $this->authorizeTeacherAccess($student);
+
         $student->load('studentClass', 'attendances');
         
         // สถิติการเข้าเรียน
@@ -75,6 +95,8 @@ class StudentController extends Controller
      */
     public function edit(Student $student)
     {
+        $this->authorizeTeacherAccess($student);
+
         $classes = StudentClass::all();
         return view('students.edit', compact('student', 'classes'));
     }
@@ -84,6 +106,8 @@ class StudentController extends Controller
      */
     public function update(Request $request, Student $student)
     {
+        $this->authorizeTeacherAccess($student);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $student->id,
@@ -103,6 +127,8 @@ class StudentController extends Controller
      */
     public function destroy(Student $student)
     {
+        $this->authorizeTeacherAccess($student);
+
         $student->delete();
 
         return redirect()->route('students.index')
@@ -116,12 +142,33 @@ class StudentController extends Controller
     {
         $query = $request->input('q');
         
-        $students = Student::where('name', 'like', "%{$query}%")
-            ->orWhere('student_id', 'like', "%{$query}%")
-            ->orWhere('email', 'like', "%{$query}%")
-            ->with('studentClass')
-            ->paginate(15);
+        $builder = Student::where(function ($b) use ($query) {
+            $b->where('name', 'like', "%{$query}%")
+                ->orWhere('student_id', 'like', "%{$query}%")
+                ->orWhere('email', 'like', "%{$query}%");
+            })
+            ->with('studentClass');
+
+        if (Auth::user()->role === 'teacher') {
+            $classIds = $this->getTeacherClassIds();
+            $builder->whereIn('class_id', $classIds);
+        }
+
+        $students = $builder->paginate(15);
 
         return view('students.index', compact('students', 'query'));
+    }
+
+    /**
+     * ตรวจสอบสิทธิ์อาจารย์ - เข้าถึงได้เฉพาะนักศึกษาในรายวิชาที่สอน
+     */
+    private function authorizeTeacherAccess(Student $student): void
+    {
+        if (Auth::user()->role === 'teacher') {
+            $classIds = $this->getTeacherClassIds();
+            if (!$classIds->contains($student->class_id)) {
+                abort(403, 'ไม่มีสิทธิ์เข้าถึงข้อมูลนักศึกษาคนนี้');
+            }
+        }
     }
 }

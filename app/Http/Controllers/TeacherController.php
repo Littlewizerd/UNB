@@ -105,9 +105,11 @@ class TeacherController extends Controller
     {
         $query = $request->input('q');
         
-        $teachers = Teacher::where('name', 'like', "%{$query}%")
-            ->orWhere('teacher_id', 'like', "%{$query}%")
-            ->orWhere('department', 'like', "%{$query}%")
+        $teachers = Teacher::where(function ($builder) use ($query) {
+            $builder->where('name', 'like', "%{$query}%")
+                ->orWhere('teacher_id', 'like', "%{$query}%")
+                ->orWhere('department', 'like', "%{$query}%");
+            })
             ->paginate(15);
 
         return view('teachers.index', compact('teachers', 'query'));

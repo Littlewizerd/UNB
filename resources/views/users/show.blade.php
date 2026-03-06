@@ -26,7 +26,7 @@
                         @php
                             $roleText = match($user->role) {
                                 'admin' => 'ผู้ดูแลระบบ',
-                                'teacher' => 'ครู',
+                                'teacher' => 'อาจารย์',
                                 'student' => 'นักเรียน',
                                 default => $user->role
                             };

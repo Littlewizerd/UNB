@@ -26,7 +26,7 @@ class ScheduleController extends Controller
             $query->whereHas('subject', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%");
             })->orWhereHas('studentClass', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
+                $q->where('class_name', 'like', "%{$search}%");
             });
         }
 
@@ -70,12 +70,34 @@ class ScheduleController extends Controller
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'room' => 'nullable|string|max:50',
-            'semester' => 'required|integer|in:1,2',
-            'academic_year' => 'required|integer|min:2560|max:2650',
-            'semester_id' => 'nullable|exists:semesters,id',
+            'semester_id' => 'required|exists:semesters,id',
         ]);
 
-        Schedule::create($request->all());
+        $semesterRecord = Semester::findOrFail($request->semester_id);
+        $semesterNumber = (int) filter_var($semesterRecord->name, FILTER_SANITIZE_NUMBER_INT) ?: 1;
+        $academicYear = $semesterRecord->year - 543;
+
+        // ตรวจสอบตารางชนกัน
+        $conflicts = $this->findConflicts(
+            $request->class_id,
+            $request->teacher_id,
+            $request->day_of_week,
+            $request->start_time,
+            $request->end_time,
+            $request->semester_id
+        );
+
+        if ($conflicts->isNotEmpty()) {
+            $messages = $conflicts->map(function ($s) {
+                return "วิชา {$s->subject->name} (ห้อง {$s->room}) {$s->start_time}-{$s->end_time}";
+            })->implode(', ');
+            return back()->withInput()->withErrors(['start_time' => "เวลาชนกับ: {$messages}"]);
+        }
+
+        Schedule::create(array_merge($request->except(['semester', 'academic_year']), [
+            'semester' => $semesterNumber,
+            'academic_year' => $academicYear,
+        ]));
 
         return redirect()->route('schedules.index')->with('success', 'สร้างตารางเรียนสำเร็จ');
     }
@@ -115,14 +137,62 @@ class ScheduleController extends Controller
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'room' => 'nullable|string|max:50',
-            'semester' => 'required|integer|in:1,2',
-            'academic_year' => 'required|integer|min:2560|max:2650',
-            'semester_id' => 'nullable|exists:semesters,id',
+            'semester_id' => 'required|exists:semesters,id',
         ]);
 
-        $schedule->update($request->all());
+        $semesterRecord = Semester::findOrFail($request->semester_id);
+        $semesterNumber = (int) filter_var($semesterRecord->name, FILTER_SANITIZE_NUMBER_INT) ?: 1;
+        $academicYear = $semesterRecord->year - 543;
+
+        // ตรวจสอบตารางชนกัน (ยกเว้นตัวเอง)
+        $conflicts = $this->findConflicts(
+            $request->class_id,
+            $request->teacher_id,
+            $request->day_of_week,
+            $request->start_time,
+            $request->end_time,
+            $request->semester_id,
+            $schedule->id
+        );
+
+        if ($conflicts->isNotEmpty()) {
+            $messages = $conflicts->map(function ($s) {
+                return "วิชา {$s->subject->name} (ห้อง {$s->room}) {$s->start_time}-{$s->end_time}";
+            })->implode(', ');
+            return back()->withInput()->withErrors(['start_time' => "เวลาชนกับ: {$messages}"]);
+        }
+
+        $schedule->update(array_merge($request->except(['semester', 'academic_year']), [
+            'semester' => $semesterNumber,
+            'academic_year' => $academicYear,
+        ]));
 
         return redirect()->route('schedules.index')->with('success', 'อัปเดตตารางเรียนสำเร็จ');
+    }
+
+    /**
+     * ตรวจสอบตารางชนกัน (ช่วงเวลา overlap สำหรับห้องเรียนหรืออาจารย์)
+     */
+    private function findConflicts(string $classId, string $teacherId, string $dayOfWeek, string $startTime, string $endTime, string $semesterId, ?int $excludeId = null)
+    {
+        $query = Schedule::with('subject')
+            ->where('day_of_week', $dayOfWeek)
+            ->where('semester_id', $semesterId)
+            ->where(function ($q) use ($classId, $teacherId) {
+                $q->where('class_id', $classId)
+                  ->orWhere('teacher_id', $teacherId);
+            })
+            ->where(function ($q) use ($startTime, $endTime) {
+                // ช่วงเวลาชนกัน: start < existing_end AND end > existing_start
+                $q->where('start_time', '<', $endTime)
+                  ->where('end_time', '>', $startTime);
+            });
+
+        if ($excludeId !== null) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->get();
     }
 
     /**
@@ -141,14 +211,20 @@ class ScheduleController extends Controller
     public function teacherSchedule()
     {
         $teacher = Auth::user();
-        $schedules = Schedule::where('teacher_id', $teacher->id)
-            ->with(['studentClass', 'subject', 'semesterData'])
-            ->orderBy('semester', 'asc')
-            ->orderBy('day_of_week', 'asc')
+        $activeSemester = Semester::where('is_active', true)->first();
+
+        $query = Schedule::where('teacher_id', $teacher->id)
+            ->with(['studentClass', 'subject', 'semesterData']);
+
+        if ($activeSemester) {
+            $query->where('semester_id', $activeSemester->id);
+        }
+
+        $schedules = $query->orderBy('day_of_week', 'asc')
             ->orderBy('start_time', 'asc')
             ->get();
 
-        return view('schedules.teacher-schedule', compact('schedules'));
+        return view('schedules.teacher-schedule', compact('schedules', 'teacher', 'activeSemester'));
     }
 
     /**
@@ -158,14 +234,20 @@ class ScheduleController extends Controller
     {
         $student = Auth::user();
         $classId = $student->class_id;
+        $activeSemester = Semester::where('is_active', true)->first();
+        $studentClass = $classId ? StudentClass::find($classId) : null;
 
-        $schedules = Schedule::where('class_id', $classId)
-            ->with(['subject', 'teacher', 'semesterData'])
-            ->orderBy('semester', 'asc')
-            ->orderBy('day_of_week', 'asc')
+        $query = Schedule::where('class_id', $classId)
+            ->with(['subject', 'teacher', 'semesterData']);
+
+        if ($activeSemester) {
+            $query->where('semester_id', $activeSemester->id);
+        }
+
+        $schedules = $query->orderBy('day_of_week', 'asc')
             ->orderBy('start_time', 'asc')
             ->get();
 
-        return view('schedules.student-schedule', compact('schedules'));
+        return view('schedules.grid-view', compact('schedules', 'student', 'activeSemester', 'studentClass'));
     }
 }

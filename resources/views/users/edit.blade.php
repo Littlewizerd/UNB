@@ -51,7 +51,7 @@
                         <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('role') border-red-500 @enderror" 
                                 id="role" name="role" required>
                             <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>ผู้ดูแลระบบ</option>
-                            <option value="teacher" {{ old('role', $user->role) == 'teacher' ? 'selected' : '' }}>ครู</option>
+                            <option value="teacher" {{ old('role', $user->role) == 'teacher' ? 'selected' : '' }}>อาจารย์</option>
                             <option value="student" {{ old('role', $user->role) == 'student' ? 'selected' : '' }}>นักเรียน</option>
                         </select>
                         @error('role')

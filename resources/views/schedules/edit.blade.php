@@ -36,7 +36,7 @@
                             <option value="">-- เลือกชั้นเรียน --</option>
                             @foreach($classes as $class)
                                 <option value="{{ $class->id }}" {{ old('class_id', $schedule->class_id) == $class->id ? 'selected' : '' }}>
-                                    {{ $class->name }}
+                                    {{ $class->class_name }}
                                 </option>
                             @endforeach
                         </select>
@@ -90,12 +90,28 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                             <label for="start_time" class="block text-gray-700 font-bold mb-2">เวลาเริ่ม</label>
-                            <input type="time" id="start_time" name="start_time" value="{{ old('start_time', $schedule->start_time) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg @error('start_time') border-red-500 @enderror" required>
+                            <select id="start_time" name="start_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg @error('start_time') border-red-500 @enderror" required>
+                                <option value="">-- เลือกเวลา --</option>
+                                @for ($h = 7; $h <= 22; $h++)
+                                    @foreach (['00', '30'] as $m)
+                                        @php $t = str_pad($h, 2, '0', STR_PAD_LEFT) . ':' . $m; @endphp
+                                        <option value="{{ $t }}" {{ old('start_time', \Carbon\Carbon::parse($schedule->start_time)->format('H:i')) == $t ? 'selected' : '' }}>{{ $t }} น.</option>
+                                    @endforeach
+                                @endfor
+                            </select>
                             @error('start_time') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label for="end_time" class="block text-gray-700 font-bold mb-2">เวลาสิ้นสุด</label>
-                            <input type="time" id="end_time" name="end_time" value="{{ old('end_time', $schedule->end_time) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg @error('end_time') border-red-500 @enderror" required>
+                            <select id="end_time" name="end_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg @error('end_time') border-red-500 @enderror" required>
+                                <option value="">-- เลือกเวลา --</option>
+                                @for ($h = 7; $h <= 22; $h++)
+                                    @foreach (['00', '30'] as $m)
+                                        @php $t = str_pad($h, 2, '0', STR_PAD_LEFT) . ':' . $m; @endphp
+                                        <option value="{{ $t }}" {{ old('end_time', \Carbon\Carbon::parse($schedule->end_time)->format('H:i')) == $t ? 'selected' : '' }}>{{ $t }} น.</option>
+                                    @endforeach
+                                @endfor
+                            </select>
                             @error('end_time') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                         </div>
                     </div>
@@ -105,6 +121,19 @@
                         <label for="room" class="block text-gray-700 font-bold mb-2">ห้องเรียน</label>
                         <input type="text" id="room" name="room" value="{{ old('room', $schedule->room) }}" placeholder="เช่น 101" class="w-full px-4 py-2 border border-gray-300 rounded-lg @error('room') border-red-500 @enderror">
                         @error('room') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="mb-8">
+                        <label for="semester_id" class="block text-gray-700 font-bold mb-2">ภาคเรียน / ปีการศึกษา <span class="text-red-600">*</span></label>
+                        <select id="semester_id" name="semester_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('semester_id') border-red-500 @enderror" required>
+                            <option value="">-- เลือกภาคเรียน --</option>
+                            @foreach($semesters as $sem)
+                                <option value="{{ $sem->id }}" {{ old('semester_id', $schedule->semester_id) == $sem->id ? 'selected' : '' }}>
+                                    {{ $sem->name }} (พ.ศ. {{ $sem->year }})
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('semester_id') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                     </div>
 
                     <!-- Buttons -->
