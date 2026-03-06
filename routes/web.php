@@ -38,19 +38,16 @@ Route::middleware('auth')->group(function () {
     });
 
     // ===== Students Management =====
-    // Admin: full CRUD
-    Route::middleware('role:admin')->group(function () {
-        Route::get('/students/create', [StudentController::class, 'create'])->name('students.create');
-        Route::post('/students', [StudentController::class, 'store'])->name('students.store');
-        Route::get('/students/{student}/edit', [StudentController::class, 'edit'])->name('students.edit');
-        Route::put('/students/{student}', [StudentController::class, 'update'])->name('students.update');
-        Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
-    });
-    // Admin + Teacher: view only
+    // Admin + Teacher: full CRUD
     Route::middleware('role:admin,teacher')->group(function () {
         Route::get('/students', [StudentController::class, 'index'])->name('students.index');
         Route::get('/students/search', [StudentController::class, 'search'])->name('students.search');
+        Route::get('/students/create', [StudentController::class, 'create'])->name('students.create');
+        Route::post('/students', [StudentController::class, 'store'])->name('students.store');
         Route::get('/students/{student}', [StudentController::class, 'show'])->name('students.show');
+        Route::get('/students/{student}/edit', [StudentController::class, 'edit'])->name('students.edit');
+        Route::put('/students/{student}', [StudentController::class, 'update'])->name('students.update');
+        Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
     });
 
     // ===== Subjects (View: Admin/Teacher/Student, Manage: Admin Only) =====

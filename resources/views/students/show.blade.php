@@ -79,11 +79,11 @@
     </div>
 
     <div class="mt-3">
-        @if(auth()->user()->role === 'admin')
+        @if(in_array(auth()->user()->role, ['admin', 'teacher']))
             <a href="{{ route('students.edit', $student) }}" class="btn btn-warning">แก้ไข</a>
         @endif
         <a href="{{ route('students.index') }}" class="btn btn-secondary">กลับ</a>
-        @if(auth()->user()->role === 'admin')
+        @if(in_array(auth()->user()->role, ['admin', 'teacher']))
             <form action="{{ route('students.destroy', $student) }}" method="POST" style="display:inline;">
                 @csrf @method('DELETE')
                 <button type="submit" class="btn btn-danger" onclick="return confirm('ยืนยันการลบนักเรียน {{ $student->name }}?')">ลบ</button>
