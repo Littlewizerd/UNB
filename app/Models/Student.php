@@ -12,7 +12,7 @@ class Student extends User
     use HasFactory;
 
     protected $table = 'users';
-    protected $fillable = ['name', 'email', 'student_id', 'phone', 'class_id'];
+    protected $fillable = ['name', 'email', 'password', 'role', 'student_id', 'phone', 'class_id'];
 
     protected static function booted(): void
     {

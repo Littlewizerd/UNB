@@ -63,6 +63,8 @@ class AttendanceController extends Controller
         $teacher = Auth::user();
 
         $count = 0;
+        $submittedAt = Carbon::now(config('app.timezone'));
+
         // บันทึกสถานะการเข้าเรียนสำหรับนักเรียนแต่ละคน
         foreach ($validated['attendances'] as $attendance) {
             $status = $attendance['status'];
@@ -74,7 +76,7 @@ class AttendanceController extends Controller
                 $checkInTime = $schedule->start_time;   // มาปกติ = เวลาเริ่มเรียน
                 $checkOutTime = $schedule->end_time;
             } elseif ($status === 'late') {
-                $checkInTime = null;                    // มาสาย = ไม่ทราบเวลาแน่ชัด
+                $checkInTime = $submittedAt->format('H:i:s'); // มาสาย = ใช้เวลาล่าสุดที่กดบันทึก
                 $checkOutTime = $schedule->end_time;
             }
 

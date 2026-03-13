@@ -9,8 +9,10 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SemesterController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\MakeupScheduleController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TeacherController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -37,17 +39,25 @@ Route::middleware('auth')->group(function () {
         Route::resource('classes', ClassController::class);
     });
 
+    // ===== Teachers Management (Admin Only) =====
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('teachers', TeacherController::class);
+    });
+
     // ===== Students Management =====
-    // Admin + Teacher: full CRUD
-    Route::middleware('role:admin,teacher')->group(function () {
-        Route::get('/students', [StudentController::class, 'index'])->name('students.index');
-        Route::get('/students/search', [StudentController::class, 'search'])->name('students.search');
-        Route::get('/students/create', [StudentController::class, 'create'])->name('students.create');
-        Route::post('/students', [StudentController::class, 'store'])->name('students.store');
-        Route::get('/students/{student}', [StudentController::class, 'show'])->name('students.show');
+        // Admin: full CRUD
+    Route::middleware('role:admin')->group(function () {
+            Route::get('/students/create', [StudentController::class, 'create'])->name('students.create');
+            Route::post('/students', [StudentController::class, 'store'])->name('students.store');
         Route::get('/students/{student}/edit', [StudentController::class, 'edit'])->name('students.edit');
         Route::put('/students/{student}', [StudentController::class, 'update'])->name('students.update');
-        Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
+            Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
+        });
+        // Admin + Teacher: view only
+        Route::middleware('role:admin,teacher')->group(function () {
+            Route::get('/students', [StudentController::class, 'index'])->name('students.index');
+            Route::get('/students/search', [StudentController::class, 'search'])->name('students.search');
+            Route::get('/students/{student}', [StudentController::class, 'show'])->name('students.show');
     });
 
     // ===== Subjects (View: Admin/Teacher/Student, Manage: Admin Only) =====
@@ -71,6 +81,7 @@ Route::middleware('auth')->group(function () {
 
     // ===== Schedules Management (Admin Only) =====
     Route::middleware('role:admin')->group(function () {
+        Route::get('/schedules/available-rooms', [ScheduleController::class, 'availableRooms'])->name('schedules.available-rooms');
         Route::resource('schedules', ScheduleController::class);
     });
     Route::get('/my-schedule', function () {
@@ -79,6 +90,7 @@ Route::middleware('auth')->group(function () {
         } elseif (auth()->user()->role === 'student') {
             return app(ScheduleController::class)->studentSchedule();
         }
+        return redirect()->route('schedules.index');
     })->name('schedules.my-schedule');
     
     Route::get('/schedules/teacher/schedule', [ScheduleController::class, 'teacherSchedule'])
@@ -87,6 +99,28 @@ Route::middleware('auth')->group(function () {
     Route::get('/schedules/student/schedule', [ScheduleController::class, 'studentSchedule'])
         ->middleware('role:student,admin')
         ->name('schedules.student-schedule');
+
+    // ===== Makeup Schedules =====
+    Route::get('/makeup-schedules/teacher/schedule', [MakeupScheduleController::class, 'teacherSchedule'])
+        ->middleware('role:teacher,admin')
+        ->name('makeup-schedules.teacher-schedule');
+    Route::get('/makeup-schedules/student/schedule', [MakeupScheduleController::class, 'studentSchedule'])
+        ->middleware('role:student,admin')
+        ->name('makeup-schedules.student-schedule');
+
+    Route::middleware('role:admin,teacher')->group(function () {
+        Route::get('/makeup-schedules/available-rooms', [MakeupScheduleController::class, 'availableRooms'])->name('makeup-schedules.available-rooms');
+        Route::get('/makeup-schedules', [MakeupScheduleController::class, 'index'])->name('makeup-schedules.index');
+        Route::get('/makeup-schedules/create', [MakeupScheduleController::class, 'create'])->name('makeup-schedules.create');
+        Route::post('/makeup-schedules', [MakeupScheduleController::class, 'store'])->name('makeup-schedules.store');
+        Route::get('/makeup-schedules/{makeupSchedule}/edit', [MakeupScheduleController::class, 'edit'])->name('makeup-schedules.edit');
+        Route::put('/makeup-schedules/{makeupSchedule}', [MakeupScheduleController::class, 'update'])->name('makeup-schedules.update');
+        Route::delete('/makeup-schedules/{makeupSchedule}', [MakeupScheduleController::class, 'destroy'])->name('makeup-schedules.destroy');
+        Route::patch('/makeup-schedules/{makeupSchedule}/complete', [MakeupScheduleController::class, 'complete'])->name('makeup-schedules.complete');
+    });
+
+    // ===== Notifications (real-time polling) =====
+    Route::get('/notifications/count', [MessageController::class, 'notificationsCount'])->name('notifications.count');
 
     // ===== Messages =====
     Route::prefix('messages')->name('messages.')->group(function () {
@@ -113,6 +147,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/daily-summary', [ReportController::class, 'dailySummary'])->name('dailySummary');
             Route::get('/class/{class}', [ReportController::class, 'classReport'])->name('classReport');
             Route::get('/class/{class}/pdf', [ReportController::class, 'classReportPdf'])->name('classReportPdf');
+            Route::get('/subject/{subject}', [ReportController::class, 'subjectReport'])->name('subjectReport');
         });
 
         // Admin-only PDF reports

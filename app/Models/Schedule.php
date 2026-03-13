@@ -14,6 +14,19 @@ class Schedule extends Model
     protected $fillable = ['class_id', 'subject_id', 'teacher_id', 'day_of_week', 'start_time', 'end_time', 'room', 'semester', 'academic_year', 'semester_id'];
     protected $casts = ['created_at' => 'datetime', 'updated_at' => 'datetime'];
 
+    const ROOMS = [
+        'A101',
+        'A102',
+        'A103',
+        'B201',
+        'B202',
+        'B203',
+        'C301',
+        'C302',
+        'D401',
+        'D402',
+    ];
+
     // วันในสัปดาห์
     const DAYS = [
         'M' => 'จันทร์',

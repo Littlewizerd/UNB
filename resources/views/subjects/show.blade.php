@@ -46,28 +46,6 @@
         </div>
 
         <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">สถิติ</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-6 mb-3">
-                            <div class="border rounded p-3">
-                                <h4 class="text-primary mb-0">{{ $subject->schedules->count() ?? 0 }}</h4>
-                                <small class="text-muted">ตารางเรียน</small>
-                            </div>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <div class="border rounded p-3">
-                                <h4 class="text-success mb-0">{{ $subject->attendances->count() ?? 0 }}</h4>
-                                <small class="text-muted">การเข้าเรียน</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             @if($subject->schedules && $subject->schedules->count() > 0)
             <div class="card">
                 <div class="card-header">
@@ -122,7 +100,6 @@
                                     <td>{{ $student->email }}</td>
                                     <td>
                                         <a href="{{ route('reports.individualReport', $student) }}" class="btn btn-sm btn-info">ดูรายงาน</a>
-                                        <a href="{{ route('students.show', $student) }}" class="btn btn-sm btn-secondary">ดูข้อมูล</a>
                                     </td>
                                 </tr>
                             @endforeach

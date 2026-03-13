@@ -41,52 +41,17 @@
             </div>
         </div>
 
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">สถิติการเข้าเรียน</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-6 col-md-3 mb-3">
-                            <div class="border rounded p-2">
-                                <h4 class="text-success mb-0">{{ $stats['present'] }}</h4>
-                                <small class="text-muted">มาเรียน</small>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <div class="border rounded p-2">
-                                <h4 class="text-danger mb-0">{{ $stats['absent'] }}</h4>
-                                <small class="text-muted">ขาด</small>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <div class="border rounded p-2">
-                                <h4 class="text-warning mb-0">{{ $stats['late'] }}</h4>
-                                <small class="text-muted">สาย</small>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <div class="border rounded p-2">
-                                <h4 class="text-info mb-0">{{ $stats['excused'] }}</h4>
-                                <small class="text-muted">ลา</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <div class="mt-3">
-        @if(in_array(auth()->user()->role, ['admin', 'teacher']))
+        @if(auth()->user()->role === 'admin')
             <a href="{{ route('students.edit', $student) }}" class="btn btn-warning">แก้ไข</a>
         @endif
         <a href="{{ route('students.index') }}" class="btn btn-secondary">กลับ</a>
-        @if(in_array(auth()->user()->role, ['admin', 'teacher']))
+        @if(auth()->user()->role === 'admin')
             <form action="{{ route('students.destroy', $student) }}" method="POST" style="display:inline;">
                 @csrf @method('DELETE')
-                <button type="submit" class="btn btn-danger" onclick="return confirm('ยืนยันการลบนักเรียน {{ $student->name }}?')">ลบ</button>
+                <button type="submit" class="btn btn-danger" onclick="return confirm({{ \Illuminate\Support\Js::from('ยืนยันการลบนักเรียน ' . $student->name . '?') }})">ลบ</button>
             </form>
         @endif
     </div>

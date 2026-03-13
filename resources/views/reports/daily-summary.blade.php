@@ -1,119 +1,91 @@
-@extends('layouts.app')
+<x-app-layout>
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-@section('content')
-<div class="container">
-    <h1 class="my-4">สรุปการเข้าเรียนประจำวัน</h1>
-
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6 class="card-title">รวมทั้งสิ้น</h6>
-                    <h4 class="text-primary">{{ $summary['total'] }}</h4>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6 class="card-title">มาเรียน</h6>
-                    <h4 class="text-success">{{ $summary['present'] }}</h4>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6 class="card-title">ขาดเรียน</h6>
-                    <h4 class="text-danger">{{ $summary['absent'] }}</h4>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6 class="card-title">มาสาย</h6>
-                    <h4 class="text-warning">{{ $summary['late'] }}</h4>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- ดูรายงานตามห้องเรียน / รายวิชา (เชื่อมต่อ p13: ส่งออกรายงาน PDF) --}}
-    <div class="row mb-4">
-        @if(isset($teacherClasses) && $teacherClasses->count() > 0)
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">📋 รายงานตามห้องเรียน</h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        @foreach($teacherClasses as $class)
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <span>{{ $class->class_name }} ({{ $class->class_code }})</span>
-                                <div>
-                                    <a href="{{ route('reports.classReport', $class) }}" class="btn btn-sm btn-outline-primary">ดูรายงาน</a>
-                                    <a href="{{ route('reports.classReportPdf', $class) }}" class="btn btn-sm btn-success" target="_blank">📥 PDF</a>
-                                </div>
-                            </div>
-                        @endforeach
+            {{-- Header --}}
+            <div class="bg-white rounded-lg shadow-lg p-8 mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800">ภาพรวมการเข้าเรียน</h1>
+                        <p class="text-gray-500 text-sm mt-1">สรุปประวัติการเข้าเรียนตลอดภาคเรียน · เรียงตามอัตราเข้าเรียนสูงสุด</p>
+                    </div>
+                    <div class="inline-flex items-center rounded-full bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700 self-start">
+                        อัปเดตล่าสุด {{ now()->format('d/m/Y H:i') }} น.
                     </div>
                 </div>
             </div>
-        </div>
-        @endif
 
-    </div>
+            {{-- ===== ตารางภาพรวมรายวิชา ===== --}}
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h2 class="text-lg font-bold text-gray-800">ภาพรวมรายวิชา</h2>
+                    <p class="text-sm text-gray-500">รวมทุกนักศึกษาตลอดภาคเรียน · คลิก "ดูรายละเอียด" เพื่อดูภาพรวมรายนักศึกษาของแต่ละวิชา</p>
+                </div>
 
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">รายละเอียดการเข้าเรียนวันนี้</h5>
-        </div>
-        <div class="card-body">
-            @if($attendances->count() > 0)
-                <table class="table table-striped table-sm">
-                    <thead>
-                        <tr>
-                            <th>นักเรียน</th>
-                            <th>ชั้นเรียน</th>
-                            <th>วิชา</th>
-                            <th>เวลาเข้า</th>
-                            <th>เวลาออก</th>
-                            <th>สถานะ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($attendances as $record)
-                            <tr>
-                                <td>{{ $record->student->name }}</td>
-                                <td>{{ $record->student->studentClass->class_name ?? '-' }}</td>
-                                <td>{{ $record->subject->name ?? '-' }}</td>
-                                <td>{{ $record->check_in_time ? \Carbon\Carbon::parse($record->check_in_time)->format('H:i') : '-' }}</td>
-                                <td>{{ $record->check_out_time ? \Carbon\Carbon::parse($record->check_out_time)->format('H:i') : '-' }}</td>
-                                <td>
+                @if($subjectStats->count() > 0)
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">#</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">วิชา</th>
+                                    <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">บันทึกทั้งหมด</th>
+                                    <th class="px-4 py-3 text-center text-xs font-semibold text-green-600 uppercase tracking-wide">มาเรียน</th>
+                                    <th class="px-4 py-3 text-center text-xs font-semibold text-red-500 uppercase tracking-wide">ขาด</th>
+                                    <th class="px-4 py-3 text-center text-xs font-semibold text-amber-500 uppercase tracking-wide">สาย</th>
+                                    <th class="px-4 py-3 text-center text-xs font-semibold text-sky-500 uppercase tracking-wide">ลา</th>
+                                    <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">อัตราเข้าเรียน</th>
+                                    <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">รายละเอียด</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach($subjectStats as $i => $row)
                                     @php
-                                        $statusClass = match($record->status) {
-                                            'present' => 'success', 'absent' => 'danger',
-                                            'late' => 'warning', 'excused' => 'info',
-                                            default => 'secondary'
-                                        };
-                                        $statusText = match($record->status) {
-                                            'present' => 'มาเรียน', 'absent' => 'ขาดเรียน',
-                                            'late' => 'มาสาย', 'excused' => 'ลากิจ/ป่วย',
-                                            default => 'ไม่ระบุ'
-                                        };
+                                        $pct = $row['percentage'];
+                                        $barColor = $pct >= 80 ? 'bg-green-500' : ($pct >= 60 ? 'bg-amber-400' : 'bg-red-500');
+                                        $pctColor = $pct >= 80 ? 'text-green-700' : ($pct >= 60 ? 'text-amber-600' : 'text-red-600');
                                     @endphp
-                                    <span class="badge bg-{{ $statusClass }}">{{ $statusText }}</span>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @else
-                <div class="alert alert-info">ยังไม่มีบันทึกการเข้าเรียนในวันนี้</div>
-            @endif
+                                    <tr class="hover:bg-gray-50 transition">
+                                        <td class="px-6 py-3 text-sm text-gray-400 font-medium">{{ $i + 1 }}</td>
+                                        <td class="px-4 py-3">
+                                            <p class="font-semibold text-gray-800 text-sm">{{ $row['subject']->name }}</p>
+                                            <p class="text-xs text-gray-400">{{ $row['subject']->subject_code }}</p>
+                                        </td>
+                                        <td class="px-4 py-3 text-center text-sm text-gray-600 font-medium">{{ $row['total'] }}</td>
+                                        <td class="px-4 py-3 text-center font-bold text-green-600">{{ $row['present'] }}</td>
+                                        <td class="px-4 py-3 text-center font-bold text-red-500">{{ $row['absent'] }}</td>
+                                        <td class="px-4 py-3 text-center font-bold text-amber-500">{{ $row['late'] }}</td>
+                                        <td class="px-4 py-3 text-center font-bold text-sky-500">{{ $row['excused'] }}</td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-sm font-bold {{ $pctColor }}">{{ $pct }}%</span>
+                                                <div class="w-24 bg-gray-200 rounded-full h-2">
+                                                    <div class="h-2 rounded-full {{ $barColor }}" style="width: {{ $pct }}%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <a href="{{ route('reports.subjectReport', $row['subject']) }}"
+                                                class="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"/>
+                                                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
+                                                </svg>
+                                                ดูรายละเอียด
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="px-6 py-10 text-center text-indigo-700 font-medium bg-indigo-50">
+                        ยังไม่มีข้อมูลรายวิชา
+                    </div>
+                @endif
+            </div>
+
         </div>
     </div>
-</div>
-@endsection
+</x-app-layout>

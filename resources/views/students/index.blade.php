@@ -4,7 +4,7 @@
 <div class="container">
     <h1 class="my-4">จัดการนักเรียน</h1>
 
-    @if(in_array(auth()->user()->role, ['admin', 'teacher']))
+    @if(auth()->user()->role === 'admin')
         <a href="{{ route('students.create') }}" class="btn btn-primary mb-3">+ เพิ่มนักเรียนใหม่</a>
     @endif
 
@@ -35,7 +35,7 @@
                                 <td>{{ $student->phone ?? '-' }}</td>
                                 <td>
                                     <a href="{{ route('students.show', $student) }}" class="btn btn-info btn-sm">ดู</a>
-                                    @if(in_array(auth()->user()->role, ['admin', 'teacher']))
+                                    @if(auth()->user()->role === 'admin')
                                         <a href="{{ route('students.edit', $student) }}" class="btn btn-warning btn-sm">แก้ไข</a>
                                         <form action="{{ route('students.destroy', $student) }}" method="POST" style="display:inline;">
                                             @csrf @method('DELETE')

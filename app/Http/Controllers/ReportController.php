@@ -52,12 +52,67 @@ class ReportController extends Controller
     {
         $this->ensureAdminOrTeacher();
 
-        $attendances = Attendance::where('subject_id', $subject->id)
-            ->with('student', 'schedule')
-            ->orderBy('attendance_date', 'desc')
-            ->paginate(30);
+        $allAttendances = Attendance::where('subject_id', $subject->id)
+            ->with('student.studentClass', 'schedule')
+            ->orderBy('attendance_date', 'asc')
+            ->get();
 
-        return view('reports.subject-report', compact('subject', 'attendances'));
+        // สถิติรวมของวิชา
+        $total   = $allAttendances->count();
+        $present = $allAttendances->where('status', 'present')->count();
+        $late    = $allAttendances->where('status', 'late')->count();
+        $subjectSummary = [
+            'total'      => $total,
+            'present'    => $present,
+            'absent'     => $allAttendances->where('status', 'absent')->count(),
+            'late'       => $late,
+            'excused'    => $allAttendances->where('status', 'excused')->count(),
+            'percentage' => $total > 0 ? round((($present + $late) / $total) * 100, 1) : 0,
+        ];
+
+        // ภาพรวมรายนักศึกษาในวิชานี้
+        $studentStats = $allAttendances
+            ->groupBy(fn($a) => $a->student_id)
+            ->map(function ($records) {
+                $student = $records->first()->student;
+                $total   = $records->count();
+                $present = $records->where('status', 'present')->count();
+                $late    = $records->where('status', 'late')->count();
+                return [
+                    'student'    => $student,
+                    'total'      => $total,
+                    'present'    => $present,
+                    'absent'     => $records->where('status', 'absent')->count(),
+                    'late'       => $late,
+                    'excused'    => $records->where('status', 'excused')->count(),
+                    'percentage' => $total > 0 ? round((($present + $late) / $total) * 100, 1) : 0,
+                ];
+            })
+            ->sortBy(fn($row) => $row['student']->student_id)
+            ->values();
+
+        // วันที่ทั้งหมดที่มีการเช็คชื่อ (เรียงน้อยไปมาก)
+        $dates = $allAttendances
+            ->pluck('attendance_date')
+            ->map(fn($d) => $d->format('Y-m-d'))
+            ->unique()
+            ->sort()
+            ->values();
+
+        // matrix: student_id -> date_string -> status
+        $attendanceMatrix = $allAttendances
+            ->groupBy('student_id')
+            ->map(fn($recs) => $recs->keyBy(fn($a) => $a->attendance_date->format('Y-m-d'))->map->status);
+
+        // รายละเอียดตามวัน: date_string -> array of attendances
+        $dateAttendances = $allAttendances
+            ->groupBy(fn($a) => $a->attendance_date->format('Y-m-d'))
+            ->all();
+
+        return view('reports.subject-report', compact(
+            'subject', 'subjectSummary', 'studentStats',
+            'dates', 'attendanceMatrix', 'dateAttendances'
+        ));
     }
 
     /**
@@ -67,19 +122,40 @@ class ReportController extends Controller
     {
         $this->ensureCanAccessStudentData($student);
 
-        $attendances = Attendance::where('student_id', $student->id)
+        $allAttendances = Attendance::where('student_id', $student->id)
             ->with('schedule.subject', 'schedule.studentClass')
             ->orderBy('attendance_date', 'desc')
-            ->paginate(20);
+            ->get();
 
         $stats = [
-            'present' => Attendance::where('student_id', $student->id)->where('status', 'present')->count(),
-            'absent' => Attendance::where('student_id', $student->id)->where('status', 'absent')->count(),
-            'late' => Attendance::where('student_id', $student->id)->where('status', 'late')->count(),
-            'excused' => Attendance::where('student_id', $student->id)->where('status', 'excused')->count()
+            'present' => $allAttendances->where('status', 'present')->count(),
+            'absent' => $allAttendances->where('status', 'absent')->count(),
+            'late' => $allAttendances->where('status', 'late')->count(),
+            'excused' => $allAttendances->where('status', 'excused')->count(),
         ];
 
-        return view('reports.individual-report', compact('student', 'attendances', 'stats'));
+        $subjectStats = $allAttendances
+            ->groupBy(fn($a) => $a->schedule?->subject?->id ?? 0)
+            ->filter(fn($records, $subjectId) => $subjectId != 0)
+            ->map(function ($records) {
+                $subject = $records->first()->schedule->subject;
+                $total = $records->count();
+                $present = $records->where('status', 'present')->count();
+                $late = $records->where('status', 'late')->count();
+                return [
+                    'subject'    => $subject,
+                    'total'      => $total,
+                    'present'    => $present,
+                    'absent'     => $records->where('status', 'absent')->count(),
+                    'late'       => $late,
+                    'excused'    => $records->where('status', 'excused')->count(),
+                    'percentage' => $total > 0 ? round((($present + $late) / $total) * 100, 2) : 0,
+                    'records'    => $records->values(),
+                ];
+            })
+            ->values();
+
+        return view('reports.individual-report', compact('student', 'allAttendances', 'stats', 'subjectStats'));
     }
 
     /**
@@ -137,7 +213,7 @@ class ReportController extends Controller
     }
 
     /**
-     * สรุปการเข้าเรียนประจำวัน
+     * ภาพรวมการเข้าเรียนตลอดภาคเรียน (รายนักศึกษา + รายวิชา)
      */
     public function dailySummary()
     {
@@ -145,38 +221,91 @@ class ReportController extends Controller
 
         $user = auth()->user();
         $userRole = strtolower($user->role ?? '');
-        $today = now()->toDateString();
 
-        $attendancesQuery = Attendance::whereDate('attendance_date', $today)
-            ->with('student.studentClass', 'subject');
+        // --- scope by teacher if needed ---
+        $allowedScheduleIds = null;
+        $allowedStudentIds  = null;
+        $allowedSubjectIds  = null;
 
-        // อาจารย์เห็นเฉพาะข้อมูลของนักศึกษาในรายวิชาที่ตนเองสอน (ใช้ schedule.teacher_id)
         if ($userRole === 'teacher') {
-            $teacherScheduleIds = \App\Models\Schedule::where('teacher_id', $user->id)->pluck('id');
-            $attendancesQuery->whereIn('schedule_id', $teacherScheduleIds);
+            $teacherSchedules    = Schedule::where('teacher_id', $user->id)->get();
+            $allowedScheduleIds  = $teacherSchedules->pluck('id');
+            $allowedSubjectIds   = $teacherSchedules->pluck('subject_id')->unique()->values();
+            $allowedClassIds     = $teacherSchedules->pluck('class_id')->unique()->values();
+            $allowedStudentIds   = Student::whereIn('class_id', $allowedClassIds)->pluck('id');
         }
 
-        $attendances = $attendancesQuery->get();
+        // --- all attendances in scope ---
+        $attendanceQuery = Attendance::with('schedule.subject');
+        if ($allowedScheduleIds !== null) {
+            $attendanceQuery->whereIn('schedule_id', $allowedScheduleIds);
+        }
+        $allAttendances = $attendanceQuery->get();
 
+        // --- student overview ---
+        $studentsQuery = Student::with(['studentClass', 'attendances' => function ($q) use ($allowedScheduleIds) {
+            if ($allowedScheduleIds !== null) {
+                $q->whereIn('schedule_id', $allowedScheduleIds);
+            }
+        }]);
+        if ($allowedStudentIds !== null) {
+            $studentsQuery->whereIn('id', $allowedStudentIds);
+        }
+        $students = $studentsQuery->get();
+
+        $studentStats = $students->map(function ($student) {
+            $att     = $student->attendances;
+            $total   = $att->count();
+            $present = $att->where('status', 'present')->count();
+            $late    = $att->where('status', 'late')->count();
+            return [
+                'student'    => $student,
+                'total'      => $total,
+                'present'    => $present,
+                'absent'     => $att->where('status', 'absent')->count(),
+                'late'       => $late,
+                'excused'    => $att->where('status', 'excused')->count(),
+                'percentage' => $total > 0 ? round((($present + $late) / $total) * 100, 1) : 0,
+            ];
+        })->sortByDesc('percentage')->values();
+
+        // --- subject overview ---
+        $subjectsQuery = Subject::with(['attendances' => function ($q) use ($allowedScheduleIds) {
+            if ($allowedScheduleIds !== null) {
+                $q->whereIn('schedule_id', $allowedScheduleIds);
+            }
+        }]);
+        if ($allowedSubjectIds !== null) {
+            $subjectsQuery->whereIn('id', $allowedSubjectIds);
+        }
+        $subjects = $subjectsQuery->get();
+
+        $subjectStats = $subjects->map(function ($subject) {
+            $att = $subject->attendances;
+            $total   = $att->count();
+            $present = $att->where('status', 'present')->count();
+            $late    = $att->where('status', 'late')->count();
+            return [
+                'subject'    => $subject,
+                'total'      => $total,
+                'present'    => $present,
+                'absent'     => $att->where('status', 'absent')->count(),
+                'late'       => $late,
+                'excused'    => $att->where('status', 'excused')->count(),
+                'percentage' => $total > 0 ? round((($present + $late) / $total) * 100, 1) : 0,
+            ];
+        })->sortByDesc('percentage')->values();
+
+        // --- overall totals ---
         $summary = [
-            'total' => $attendances->count(),
-            'present' => $attendances->where('status', 'present')->count(),
-            'absent' => $attendances->where('status', 'absent')->count(),
-            'late' => $attendances->where('status', 'late')->count(),
-            'excused' => $attendances->where('status', 'excused')->count()
+            'total'   => $allAttendances->count(),
+            'present' => $allAttendances->where('status', 'present')->count(),
+            'absent'  => $allAttendances->where('status', 'absent')->count(),
+            'late'    => $allAttendances->where('status', 'late')->count(),
+            'excused' => $allAttendances->where('status', 'excused')->count(),
         ];
 
-        // ส่งข้อมูลห้องเรียน/รายวิชา สำหรับนำทางไปรายงานอื่น ๆ
-        if ($userRole === 'teacher') {
-            $teacherSchedules = \App\Models\Schedule::where('teacher_id', $user->id)->get();
-            $teacherSubjects = \App\Models\Subject::whereIn('id', $teacherSchedules->pluck('subject_id')->unique())->get();
-            $teacherClasses = \App\Models\StudentClass::whereIn('id', $teacherSchedules->pluck('class_id')->unique())->get();
-        } else {
-            $teacherSubjects = \App\Models\Subject::all();
-            $teacherClasses = \App\Models\StudentClass::all();
-        }
-
-        return view('reports.daily-summary', compact('attendances', 'summary', 'teacherSubjects', 'teacherClasses'));
+        return view('reports.daily-summary', compact('summary', 'studentStats', 'subjectStats'));
     }
 
     /**

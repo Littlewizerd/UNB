@@ -16,11 +16,19 @@ return new class extends Migration
             if (!Schema::hasColumn('users', 'class_id')) {
                 return;
             }
-            
-            // ตรวจสอบว่า foreign key ยังไม่สร้าง
-            $tableDetails = Schema::getConnection()->select("SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME='users' AND COLUMN_NAME='class_id' AND REFERENCED_TABLE_NAME='student_classes'");
-            
-            if (empty($tableDetails)) {
+
+            $driver = Schema::getConnection()->getDriverName();
+            $alreadyExists = false;
+
+            if ($driver === 'mysql') {
+                $tableDetails = Schema::getConnection()->select(
+                    "SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME='users' AND COLUMN_NAME='class_id' AND REFERENCED_TABLE_NAME='student_classes'"
+                );
+                $alreadyExists = !empty($tableDetails);
+            }
+            // SQLite does not support querying INFORMATION_SCHEMA; skip check and let Laravel create the constraint
+
+            if (!$alreadyExists) {
                 $table->foreign('class_id')
                     ->references('id')
                     ->on('student_classes')

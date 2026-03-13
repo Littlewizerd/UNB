@@ -379,6 +379,19 @@ class MessageController extends Controller
             ->count();
     }
 
+    /**
+     * Return unread message count as JSON (for real-time polling)
+     */
+    public function notificationsCount()
+    {
+        $count = Message::where('recipient_id', Auth::id())
+            ->whereNull('recipient_deleted_at')
+            ->where('is_read', false)
+            ->count();
+
+        return response()->json(['unread_messages' => $count]);
+    }
+
     private function canSendToRecipient(User $sender, User $recipient): bool
     {
         if ($sender->role === 'admin') {

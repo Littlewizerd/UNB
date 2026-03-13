@@ -81,7 +81,13 @@ class SemesterController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        $semester->update($request->all());
+        $semester->update([
+            'name' => $request->name,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'year' => $request->year,
+            'is_active' => $request->boolean('is_active'),
+        ]);
 
         return redirect()->route('semesters.index')->with('success', 'อัปเดตภาคเรียนสำเร็จ');
     }

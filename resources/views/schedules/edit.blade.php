@@ -92,7 +92,7 @@
                             <label for="start_time" class="block text-gray-700 font-bold mb-2">เวลาเริ่ม</label>
                             <select id="start_time" name="start_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg @error('start_time') border-red-500 @enderror" required>
                                 <option value="">-- เลือกเวลา --</option>
-                                @for ($h = 7; $h <= 22; $h++)
+                                @for ($h = 7; $h <= 20; $h++)
                                     @foreach (['00', '30'] as $m)
                                         @php $t = str_pad($h, 2, '0', STR_PAD_LEFT) . ':' . $m; @endphp
                                         <option value="{{ $t }}" {{ old('start_time', \Carbon\Carbon::parse($schedule->start_time)->format('H:i')) == $t ? 'selected' : '' }}>{{ $t }} น.</option>
@@ -105,7 +105,7 @@
                             <label for="end_time" class="block text-gray-700 font-bold mb-2">เวลาสิ้นสุด</label>
                             <select id="end_time" name="end_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg @error('end_time') border-red-500 @enderror" required>
                                 <option value="">-- เลือกเวลา --</option>
-                                @for ($h = 7; $h <= 22; $h++)
+                                @for ($h = 7; $h <= 20; $h++)
                                     @foreach (['00', '30'] as $m)
                                         @php $t = str_pad($h, 2, '0', STR_PAD_LEFT) . ':' . $m; @endphp
                                         <option value="{{ $t }}" {{ old('end_time', \Carbon\Carbon::parse($schedule->end_time)->format('H:i')) == $t ? 'selected' : '' }}>{{ $t }} น.</option>
@@ -118,8 +118,14 @@
 
                     <!-- Room -->
                     <div class="mb-8">
-                        <label for="room" class="block text-gray-700 font-bold mb-2">ห้องเรียน</label>
-                        <input type="text" id="room" name="room" value="{{ old('room', $schedule->room) }}" placeholder="เช่น 101" class="w-full px-4 py-2 border border-gray-300 rounded-lg @error('room') border-red-500 @enderror">
+                        <label for="room" class="block text-gray-700 font-bold mb-2">ห้องเรียน <span class="text-red-600">*</span></label>
+                        <select id="room" name="room" class="w-full px-4 py-2 border border-gray-300 rounded-lg @error('room') border-red-500 @enderror" required>
+                            <option value="">-- เลือกห้องเรียน --</option>
+                            @foreach($rooms as $room)
+                                <option value="{{ $room }}" {{ old('room', $schedule->room) === $room ? 'selected' : '' }}>{{ $room }}</option>
+                            @endforeach
+                        </select>
+                        <p class="text-xs text-gray-500 mt-2">ห้องที่ถูกใช้งานในช่วงเวลานี้จะเป็นสีเทาและไม่สามารถเลือกได้</p>
                         @error('room') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                     </div>
 
@@ -149,4 +155,67 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dayField = document.getElementById('day_of_week');
+            const startField = document.getElementById('start_time');
+            const endField = document.getElementById('end_time');
+            const semesterField = document.getElementById('semester_id');
+            const roomField = document.getElementById('room');
+            const baseOptions = Array.from(roomField.options).map(option => ({ value: option.value, label: option.textContent }));
+            const currentScheduleId = '{{ $schedule->id }}';
+
+            const refreshRooms = async () => {
+                const params = new URLSearchParams({
+                    day_of_week: dayField.value,
+                    start_time: startField.value,
+                    end_time: endField.value,
+                    semester_id: semesterField.value,
+                    exclude_schedule_id: currentScheduleId,
+                });
+
+                const response = await fetch(`{{ route('schedules.available-rooms') }}?${params.toString()}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = await response.json();
+                const availabilityMap = new Map((data.rooms || []).map(room => [room.name, room.available]));
+                const selectedValue = roomField.value;
+
+                roomField.innerHTML = '';
+
+                baseOptions.forEach(optionData => {
+                    const option = document.createElement('option');
+                    option.value = optionData.value;
+
+                    if (!optionData.value) {
+                        option.textContent = optionData.label;
+                        roomField.appendChild(option);
+                        return;
+                    }
+
+                    const available = availabilityMap.has(optionData.value) ? availabilityMap.get(optionData.value) : true;
+                    option.textContent = available ? optionData.label : `${optionData.label} (ไม่ว่าง)`;
+                    option.disabled = !available;
+                    option.selected = optionData.value === selectedValue && available;
+                    roomField.appendChild(option);
+                });
+
+                if (selectedValue && roomField.value !== selectedValue) {
+                    roomField.value = '';
+                }
+            };
+
+            [dayField, startField, endField, semesterField].forEach(field => {
+                field.addEventListener('change', refreshRooms);
+            });
+
+            refreshRooms();
+        });
+    </script>
 </x-app-layout>

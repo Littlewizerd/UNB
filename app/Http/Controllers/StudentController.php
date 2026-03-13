@@ -43,14 +43,7 @@ class StudentController extends Controller
      */
     public function create()
     {
-        $query = StudentClass::query();
-
-        if (Auth::user()->role === 'teacher') {
-            $classIds = $this->getTeacherClassIds();
-            $query->whereIn('id', $classIds);
-        }
-
-        $classes = $query->all();
+        $classes = StudentClass::all();
         return view('students.create', compact('classes'));
     }
 
@@ -59,14 +52,6 @@ class StudentController extends Controller
      */
     public function store(Request $request)
     {
-        // ตรวจสอบว่าอาจารย์สามารถเพิ่มนักเรียนในชั้นเรียนนี้ได้หรือไม่
-        if (Auth::user()->role === 'teacher') {
-            $classIds = $this->getTeacherClassIds();
-            if (!$classIds->contains($request->class_id)) {
-                abort(403, 'ไม่มีสิทธิ์เพิ่มนักเรียนในชั้นเรียนนี้');
-            }
-        }
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
@@ -112,14 +97,7 @@ class StudentController extends Controller
     {
         $this->authorizeTeacherAccess($student);
 
-        $query = StudentClass::query();
-
-        if (Auth::user()->role === 'teacher') {
-            $classIds = $this->getTeacherClassIds();
-            $query->whereIn('id', $classIds);
-        }
-
-        $classes = $query->all();
+        $classes = StudentClass::all();
         return view('students.edit', compact('student', 'classes'));
     }
 
@@ -129,14 +107,6 @@ class StudentController extends Controller
     public function update(Request $request, Student $student)
     {
         $this->authorizeTeacherAccess($student);
-
-        // ตรวจสอบว่าอาจารย์กำลังย้ายนักเรียนไปเป็นชั้นเรียนที่ตนเองสอน
-        if (Auth::user()->role === 'teacher' && $request->class_id != $student->class_id) {
-            $classIds = $this->getTeacherClassIds();
-            if (!$classIds->contains($request->class_id)) {
-                abort(403, 'ไม่มีสิทธิ์ย้ายนักเรียนไปเป็นชั้นเรียนนี้');
-            }
-        }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',

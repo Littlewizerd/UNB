@@ -51,34 +51,6 @@
                 </div>
             </div>
 
-            <!-- Today's Attendance Summary -->
-            @if(isset($todayAttendance))
-            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">สรุปการเข้าเรียนวันนี้</h2>
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    <div class="text-center p-3 bg-gray-50 rounded-lg">
-                        <div class="text-2xl font-bold text-gray-800">{{ $todayAttendance['total'] }}</div>
-                        <div class="text-sm text-gray-600">ทั้งหมด</div>
-                    </div>
-                    <div class="text-center p-3 bg-green-50 rounded-lg">
-                        <div class="text-2xl font-bold text-green-600">{{ $todayAttendance['present'] }}</div>
-                        <div class="text-sm text-gray-600">มาเรียน</div>
-                    </div>
-                    <div class="text-center p-3 bg-red-50 rounded-lg">
-                        <div class="text-2xl font-bold text-red-600">{{ $todayAttendance['absent'] }}</div>
-                        <div class="text-sm text-gray-600">ขาด</div>
-                    </div>
-                    <div class="text-center p-3 bg-yellow-50 rounded-lg">
-                        <div class="text-2xl font-bold text-yellow-600">{{ $todayAttendance['late'] }}</div>
-                        <div class="text-sm text-gray-600">สาย</div>
-                    </div>
-                    <div class="text-center p-3 bg-blue-50 rounded-lg">
-                        <div class="text-2xl font-bold text-blue-600">{{ $todayAttendance['excused'] }}</div>
-                        <div class="text-sm text-gray-600">ลา</div>
-                    </div>
-                </div>
-            </div>
-            @endif
             @endif
 
             @if(Auth::user()->role === 'teacher' && isset($stats))
@@ -128,52 +100,8 @@
             @endif
 
             @if(Auth::user()->role === 'student' && isset($stats))
-            <!-- Student Statistics -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="bg-white rounded-lg shadow p-6 text-center">
-                    <div class="text-4xl font-bold text-green-600">{{ $stats['present'] }}</div>
-                    <div class="text-gray-600">มาเรียน</div>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6 text-center">
-                    <div class="text-4xl font-bold text-red-600">{{ $stats['absent'] }}</div>
-                    <div class="text-gray-600">ขาด</div>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6 text-center">
-                    <div class="text-4xl font-bold text-yellow-600">{{ $stats['late'] }}</div>
-                    <div class="text-gray-600">สาย</div>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6 text-center">
-                    <div class="text-4xl font-bold {{ $stats['percentage'] >= 80 ? 'text-green-600' : ($stats['percentage'] >= 60 ? 'text-yellow-600' : 'text-red-600') }}">{{ $stats['percentage'] }}%</div>
-                    <div class="text-gray-600">อัตราเข้าเรียน</div>
-                </div>
-            </div>
 
             @if(isset($todaySchedules) && $todaySchedules->count() > 0)
-            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">ตารางเรียนวันนี้</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">เวลา</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">วิชา</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">อาจารย์ผู้สอน</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ห้อง</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @foreach($todaySchedules as $schedule)
-                            <tr>
-                                <td class="px-4 py-3 text-sm">{{ $schedule->start_time }} - {{ $schedule->end_time }}</td>
-                                <td class="px-4 py-3 text-sm font-medium">{{ $schedule->subject->name ?? '-' }}</td>
-                                <td class="px-4 py-3 text-sm">{{ $schedule->teacher->name ?? '-' }}</td>
-                                <td class="px-4 py-3 text-sm">{{ $schedule->room ?? '-' }}</td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
             @endif
             @endif
 

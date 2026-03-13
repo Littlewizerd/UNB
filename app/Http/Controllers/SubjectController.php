@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Subject;
 use App\Models\User;
 use App\Models\Attendance;
+use App\Models\Schedule;
 use Illuminate\Http\Request;
 
 class SubjectController extends Controller
@@ -16,6 +17,39 @@ class SubjectController extends Controller
     {
         $search = trim((string) $request->query('q', ''));
         $user = auth()->user();
+
+        // นักศึกษา: แสดงภาพรวมรายวิชา พร้อมสถิติการเข้าเรียน
+        if (strtolower($user->role ?? '') === 'student') {
+            $subjects = Subject::orderBy('subject_code')->get();
+
+            $allAttendances = Attendance::where('student_id', $user->id)
+                ->with('schedule.subject')
+                ->orderBy('attendance_date', 'desc')
+                ->get();
+
+            $attendanceBySubject = $allAttendances
+                ->filter(fn($a) => $a->schedule?->subject_id)
+                ->groupBy(fn($a) => $a->schedule->subject_id);
+
+            $subjectStats = $subjects->map(function ($subject) use ($attendanceBySubject) {
+                $records = $attendanceBySubject->get($subject->id, collect());
+                $total   = $records->count();
+                $present = $records->where('status', 'present')->count();
+                $late    = $records->where('status', 'late')->count();
+                return [
+                    'subject'    => $subject,
+                    'total'      => $total,
+                    'present'    => $present,
+                    'absent'     => $records->where('status', 'absent')->count(),
+                    'late'       => $late,
+                    'excused'    => $records->where('status', 'excused')->count(),
+                    'percentage' => $total > 0 ? round((($present + $late) / $total) * 100, 1) : 0,
+                    'records'    => $records->values(),
+                ];
+            })->values();
+
+            return view('subjects.student-index', compact('subjectStats'));
+        }
 
         $subjects = Subject::with('teacher')
             ->when(strtolower($user->role ?? '') === 'teacher', function ($query) use ($user) {

@@ -19,7 +19,7 @@
                     <div>
                         <div class="mb-6 pb-6 border-b">
                             <label class="text-gray-500 text-sm font-semibold uppercase tracking-wide">ชั้นเรียน</label>
-                            <p class="text-2xl font-bold text-gray-800 mt-2">{{ $schedule->studentClass->name ?? 'ไม่ระบุ' }}</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-2">{{ $schedule->studentClass->class_name ?? 'ไม่ระบุ' }}</p>
                         </div>
 
                         <div class="mb-6 pb-6 border-b">
