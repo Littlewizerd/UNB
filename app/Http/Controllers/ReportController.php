@@ -28,13 +28,14 @@ class ReportController extends Controller
         foreach ($students as $student) {
             $total = $student->attendances->count();
             $present = $student->attendances->where('status', 'present')->count();
+            $excused = $student->attendances->where('status', 'excused')->count();
             $late = $student->attendances->where('status', 'late')->count();
-            $attended = $present + $late; // มาสายนับเป็นมาเรียน
+            $attended = $present - $excused + $late; // มาสายนับเป็นมาเรียน
             
             $reportData[] = [
                 'student' => $student,
                 'total' => $total,
-                'present' => $present,
+                'present' => ($present - $excused),
                 'absent' => $student->attendances->where('status', 'absent')->count(),
                 'late' => $late,
                 'excused' => $student->attendances->where('status', 'excused')->count(),
@@ -55,36 +56,44 @@ class ReportController extends Controller
         $allAttendances = Attendance::where('subject_id', $subject->id)
             ->with('student.studentClass', 'schedule')
             ->orderBy('attendance_date', 'asc')
+            ->orderBy('id', 'asc')
             ->get();
 
+        $reportAttendances = $allAttendances
+            ->groupBy(fn($attendance) => $attendance->student_id . '|' . $attendance->attendance_date->format('Y-m-d'))
+            ->map(fn($records) => $records->last())
+            ->sortBy(fn($attendance) => $attendance->attendance_date->format('Y-m-d') . '|' . str_pad((string) $attendance->student_id, 10, '0', STR_PAD_LEFT))
+            ->values();
+
         // สถิติรวมของวิชา
-        $total   = $allAttendances->count();
-        $present = $allAttendances->where('status', 'present')->count();
-        $late    = $allAttendances->where('status', 'late')->count();
+        $total   = $reportAttendances->count();
+        $present = $reportAttendances->where('status', 'present')->count();
+        $late    = $reportAttendances->where('status', 'late')->count();
         $subjectSummary = [
             'total'      => $total,
-            'present'    => $present,
-            'absent'     => $allAttendances->where('status', 'absent')->count(),
+            'present'    => $present, // มาสายนับเป็นมาเรียน
+            'absent'     => $reportAttendances->where('status', 'absent')->count() + $reportAttendances->where('status', 'excused')->count(),
             'late'       => $late,
-            'excused'    => $allAttendances->where('status', 'excused')->count(),
+            'excused'    => $reportAttendances->where('status', 'excused')->count(),
             'percentage' => $total > 0 ? round((($present + $late) / $total) * 100, 1) : 0,
         ];
 
         // ภาพรวมรายนักศึกษาในวิชานี้
-        $studentStats = $allAttendances
+        $studentStats = $reportAttendances
             ->groupBy(fn($a) => $a->student_id)
             ->map(function ($records) {
                 $student = $records->first()->student;
                 $total   = $records->count();
                 $present = $records->where('status', 'present')->count();
                 $late    = $records->where('status', 'late')->count();
+                $excused = $records->where('status', 'excused')->count();
                 return [
                     'student'    => $student,
                     'total'      => $total,
                     'present'    => $present,
-                    'absent'     => $records->where('status', 'absent')->count(),
+                    'absent'     => $records->where('status', 'absent')->count() + $excused,
                     'late'       => $late,
-                    'excused'    => $records->where('status', 'excused')->count(),
+                    'excused'    => $excused,
                     'percentage' => $total > 0 ? round((($present + $late) / $total) * 100, 1) : 0,
                 ];
             })
@@ -92,7 +101,7 @@ class ReportController extends Controller
             ->values();
 
         // วันที่ทั้งหมดที่มีการเช็คชื่อ (เรียงน้อยไปมาก)
-        $dates = $allAttendances
+        $dates = $reportAttendances
             ->pluck('attendance_date')
             ->map(fn($d) => $d->format('Y-m-d'))
             ->unique()
@@ -100,12 +109,12 @@ class ReportController extends Controller
             ->values();
 
         // matrix: student_id -> date_string -> status
-        $attendanceMatrix = $allAttendances
+        $attendanceMatrix = $reportAttendances
             ->groupBy('student_id')
             ->map(fn($recs) => $recs->keyBy(fn($a) => $a->attendance_date->format('Y-m-d'))->map->status);
 
         // รายละเอียดตามวัน: date_string -> array of attendances
-        $dateAttendances = $allAttendances
+        $dateAttendances = $reportAttendances
             ->groupBy(fn($a) => $a->attendance_date->format('Y-m-d'))
             ->all();
 
@@ -118,11 +127,13 @@ class ReportController extends Controller
     /**
      * รายงานรายบุคคล
      */
-    public function individualReport(Student $student)
+    public function individualReport(Request $request, Student $student)
     {
         $this->ensureCanAccessStudentData($student);
 
-        $allAttendances = Attendance::where('student_id', $student->id)
+        $selectedSubject = $this->resolveRequestedSubject($request);
+
+        $allAttendances = $this->buildStudentAttendanceQuery($student, $selectedSubject)
             ->with('schedule.subject', 'schedule.studentClass')
             ->orderBy('attendance_date', 'desc')
             ->get();
@@ -155,7 +166,7 @@ class ReportController extends Controller
             })
             ->values();
 
-        return view('reports.individual-report', compact('student', 'allAttendances', 'stats', 'subjectStats'));
+        return view('reports.individual-report', compact('student', 'allAttendances', 'stats', 'subjectStats', 'selectedSubject'));
     }
 
     /**
@@ -192,11 +203,13 @@ class ReportController extends Controller
     /**
      * ดาวน์โหลดรายงาน PDF รายบุคคล
      */
-    public function individualReportPdf(Student $student)
+    public function individualReportPdf(Request $request, Student $student)
     {
         $this->ensureCanAccessStudentData($student);
 
-        $attendances = Attendance::where('student_id', $student->id)
+        $selectedSubject = $this->resolveRequestedSubject($request);
+
+        $attendances = $this->buildStudentAttendanceQuery($student, $selectedSubject)
             ->with('schedule.subject')
             ->orderBy('attendance_date', 'desc')
             ->get();
@@ -208,8 +221,29 @@ class ReportController extends Controller
             'excused' => $attendances->where('status', 'excused')->count()
         ];
 
-        $pdf = Pdf::loadView('reports.individual-report-pdf', compact('student', 'attendances', 'stats'));
-        return $pdf->download("report-student-{$student->student_id}.pdf");
+        $subjectStats = $attendances
+            ->groupBy(fn($a) => $a->schedule?->subject?->id ?? 0)
+            ->filter(fn($records, $subjectId) => $subjectId != 0)
+            ->map(function ($records) {
+                $subject = $records->first()->schedule->subject;
+                $total = $records->count();
+                $present = $records->where('status', 'present')->count();
+                $late = $records->where('status', 'late')->count();
+                return [
+                    'subject'    => $subject,
+                    'total'      => $total,
+                    'present'    => $present,
+                    'absent'     => $records->where('status', 'absent')->count(),
+                    'late'       => $late,
+                    'excused'    => $records->where('status', 'excused')->count(),
+                    'percentage' => $total > 0 ? round((($present + $late) / $total) * 100, 2) : 0,
+                    'records'    => $records->values(),
+                ];
+            })
+            ->values();
+
+        $pdf = Pdf::loadView('reports.individual-report-pdf', compact('student', 'attendances', 'stats', 'subjectStats', 'selectedSubject'));
+        return $pdf->download($this->buildStudentReportFilename($student, $selectedSubject));
     }
 
     /**
@@ -433,5 +467,42 @@ class ReportController extends Controller
         }
 
         abort(403, 'ไม่มีสิทธิ์เข้าถึงข้อมูลนักศึกษารายนี้');
+    }
+
+    private function resolveRequestedSubject(Request $request): ?Subject
+    {
+        $subjectId = $request->integer('subject');
+
+        if (! $subjectId) {
+            return null;
+        }
+
+        return Subject::findOrFail($subjectId);
+    }
+
+    private function buildStudentAttendanceQuery(Student $student, ?Subject $subject = null)
+    {
+        $query = Attendance::where('student_id', $student->id);
+
+        if ($subject !== null) {
+            $query->where('subject_id', $subject->id);
+        }
+
+        return $query;
+    }
+
+    private function buildStudentReportFilename(Student $student, ?Subject $subject = null): string
+    {
+        if ($subject === null) {
+            return "report-student-{$student->student_id}.pdf";
+        }
+
+        $subjectIdentifier = \Illuminate\Support\Str::slug($subject->subject_code ?: $subject->name ?: (string) $subject->id);
+
+        if ($subjectIdentifier === '') {
+            $subjectIdentifier = (string) $subject->id;
+        }
+
+        return "report-student-{$student->student_id}-{$subjectIdentifier}.pdf";
     }
 }

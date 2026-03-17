@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>รายงานรายบุคคล - {{ $student->name }}</title>
+    <title>รายงานรายบุคคล - {{ $student->name }}@if($selectedSubject) - {{ $selectedSubject->name }}@endif</title>
     <style>
         body {
             font-family: 'sarabun', sans-serif;
@@ -103,6 +103,9 @@
     <div class="header">
         <h1>รายงานการเข้าเรียนรายบุคคล</h1>
         <p>ระบบตรวจสอบเวลาเรียน - Attendance Management System</p>
+        @if($selectedSubject)
+            <p>รายวิชา: {{ $selectedSubject->name }} @if($selectedSubject->subject_code) ({{ $selectedSubject->subject_code }}) @endif</p>
+        @endif
     </div>
 
     <div class="info-section">
@@ -149,58 +152,52 @@
         </div>
         @php
             $total = $stats['present'] + $stats['absent'] + $stats['late'] + $stats['excused'];
-            $percentage = $total > 0 ? round(($stats['present'] / $total) * 100, 2) : 0;
+            $percentage = $total > 0 ? round((($stats['present'] + $stats['late']) / $total) * 100, 2) : 0;
         @endphp
         <div class="percentage {{ $percentage >= 80 ? 'text-success' : ($percentage >= 60 ? 'text-warning' : 'text-danger') }}">
             อัตราการเข้าเรียน: {{ $percentage }}%
         </div>
     </div>
 
+    <!-- ภาพรวมรายวิชา -->
+    @if(isset($subjectStats) && $subjectStats->count() > 0)
     <div class="info-section">
-        <h3>รายละเอียดการเข้าเรียน</h3>
-        @if($attendances->count() > 0)
-            <table>
-                <thead>
+        <h3>ภาพรวมรายวิชา</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>วิชา</th>
+                    <th>มาเรียน</th>
+                    <th>ขาด</th>
+                    <th>สาย</th>
+                    <th>ลา</th>
+                    <th>อัตราเข้าเรียน</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($subjectStats as $data)
+                    @php
+                        $pct = $data['percentage'];
+                        $pctColor = $pct >= 80 ? 'text-success' : ($pct >= 60 ? 'text-warning' : 'text-danger');
+                    @endphp
                     <tr>
-                        <th width="5%">#</th>
-                        <th width="15%">วันที่</th>
-                        <th width="35%" class="text-left">วิชา</th>
-                        <th width="15%">เวลาเข้า</th>
-                        <th width="15%">เวลาออก</th>
-                        <th width="15%">สถานะ</th>
+                        <td class="text-left">
+                            {{ $data['subject']->name ?? '-' }}
+                            @if($data['subject']->subject_code ?? null)
+                                <br><span style="color: #888; font-size: 11px;">{{ $data['subject']->subject_code }}</span>
+                            @endif
+                        </td>
+                        <td>{{ $data['present'] }}</td>
+                        <td>{{ $data['absent'] }}</td>
+                        <td>{{ $data['late'] }}</td>
+                        <td>{{ $data['excused'] }}</td>
+                        <td class="{{ $pctColor }}">{{ $pct }}%</td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach($attendances as $index => $record)
-                        <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ \Carbon\Carbon::parse($record->attendance_date)->format('d/m/Y') }}</td>
-                            <td class="text-left">{{ $record->schedule->subject->name ?? '-' }}</td>
-                            <td>{{ $record->check_in_time ?? '-' }}</td>
-                            <td>{{ $record->check_out_time ?? '-' }}</td>
-                            <td>
-                                @php
-                                    $statusText = match($record->status) {
-                                        'present' => 'มาเรียน', 'absent' => 'ขาดเรียน',
-                                        'late' => 'มาสาย', 'excused' => 'ลา',
-                                        default => 'ไม่ระบุ'
-                                    };
-                                    $statusColor = match($record->status) {
-                                        'present' => 'text-success', 'absent' => 'text-danger',
-                                        'late' => 'text-warning', 'excused' => 'text-info',
-                                        default => ''
-                                    };
-                                @endphp
-                                <span class="{{ $statusColor }}">{{ $statusText }}</span>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @else
-            <p>ยังไม่มีบันทึกการเข้าเรียน</p>
-        @endif
+                @endforeach
+            </tbody>
+        </table>
     </div>
+    @endif
 
     <div class="footer">
         <p>วันที่พิมพ์: {{ now()->format('d/m/Y H:i') }}</p>
