@@ -111,11 +111,16 @@ class SubjectController extends Controller
         $enrolledStudents = collect();
         $userRole = strtolower((string) auth()->user()->role);
 
+        $dates = collect();
+        $attendanceMatrix = collect();
+        $dateAttendances = [];
+        $studentStats = collect();
+
         if (in_array($userRole, ['admin', 'teacher'], true)) {
             $attendanceRecords = Attendance::where('subject_id', $subject->id)
-                ->with(['student:id,name,student_id', 'schedule:id,start_time,end_time,day_of_week'])
-                ->orderByDesc('attendance_date')
-                ->paginate(20);
+                ->with(['student.studentClass', 'schedule'])
+                ->orderBy('attendance_date', 'asc')
+                ->get();
 
             // ดึงนักศึกษาที่ลงทะเบียนเรียนในรายวิชานี้ ผ่าน schedules → classes → students
             $classIds = $subject->schedules->pluck('class_id')->unique()->filter();
@@ -125,9 +130,65 @@ class SubjectController extends Controller
                     ->orderBy('student_id')
                     ->get();
             }
+
+            // ข้อมูลสำหรับตาราง matrix
+            $dates = $attendanceRecords
+                ->pluck('attendance_date')
+                ->map(fn($d) => $d->format('Y-m-d'))
+                ->unique()->sort()->values();
+
+            $attendanceMatrix = $attendanceRecords
+                ->groupBy('student_id')
+                ->map(fn($recs) => $recs->keyBy(fn($a) => $a->attendance_date->format('Y-m-d'))->map->status);
+
+            $dateAttendances = $attendanceRecords
+                ->groupBy(fn($a) => $a->attendance_date->format('Y-m-d'))
+                ->all();
+
+            // สถิติต่อนักศึกษา
+            $studentStats = $attendanceRecords
+                ->groupBy('student_id')
+                ->map(function ($recs) {
+                    $total   = $recs->count();
+                    $present = $recs->where('status', 'present')->count();
+                    $late    = $recs->where('status', 'late')->count();
+                    return [
+                        'present'    => $present,
+                        'absent'     => $recs->where('status', 'absent')->count(),
+                        'late'       => $late,
+                        'excused'    => $recs->where('status', 'excused')->count(),
+                        'percentage' => $total > 0 ? round((($present + $late) / $total) * 100, 1) : 0,
+                    ];
+                });
         }
 
-        return view('subjects.show', compact('subject', 'attendanceRecords', 'enrolledStudents'));
+        return view('subjects.show', compact('subject', 'attendanceRecords', 'enrolledStudents', 'dates', 'attendanceMatrix', 'dateAttendances', 'studentStats'));
+    }
+
+    /**
+     * JSON endpoint สำหรับ realtime polling ตารางเรียนของวิชา
+     */
+    public function schedulesJson(Subject $subject)
+    {
+        $dayMap = ['M' => 'จันทร์', 'T' => 'อังคาร', 'W' => 'พุธ', 'TH' => 'พฤหัสบดี', 'F' => 'ศุกร์', 'SA' => 'เสาร์', 'SU' => 'อาทิตย์'];
+
+        // แปลงวันปัจจุบันเป็นรหัส day_of_week
+        $todayDayCode = [0 => 'SU', 1 => 'M', 2 => 'T', 3 => 'W', 4 => 'TH', 5 => 'F', 6 => 'SA'][\Carbon\Carbon::today()->dayOfWeek];
+
+        $schedules = $subject->schedules()
+            ->where('day_of_week', $todayDayCode)
+            ->with('studentClass')
+            ->get()
+            ->map(fn($s) => [
+                'id'         => $s->id,
+                'class_name' => $s->studentClass->class_name ?? '-',
+                'day'        => $dayMap[$s->day_of_week] ?? $s->day_of_week,
+                'start_time' => $s->start_time,
+                'end_time'   => $s->end_time,
+                'room'       => $s->room ?? '-',
+            ]);
+
+        return response()->json($schedules);
     }
 
     /**

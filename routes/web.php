@@ -34,6 +34,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/record-attendance', [AttendanceController::class, 'recordAttendanceByTeacher'])->name('record-attendance');
     });
 
+    // ===== Attendance Statistics (Admin/Teacher) =====
+    Route::get('/attendance/statistics/{student}', [AttendanceController::class, 'statistics'])
+        ->middleware('role:admin,teacher')
+        ->name('attendance.statistics');
+
     // ===== Classes Management (Admin Only) =====
     Route::middleware('role:admin')->group(function () {
         Route::resource('classes', ClassController::class);
@@ -72,6 +77,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin,teacher,student')->group(function () {
         Route::get('/subjects', [SubjectController::class, 'index'])->name('subjects.index');
         Route::get('/subjects/{subject}', [SubjectController::class, 'show'])->name('subjects.show');
+        Route::get('/subjects/{subject}/schedules-json', [SubjectController::class, 'schedulesJson'])->name('subjects.schedules-json');
     });
 
     // ===== Semesters Management (Admin Only) =====

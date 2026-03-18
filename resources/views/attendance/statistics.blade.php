@@ -1,102 +1,83 @@
-@extends('layouts.app')
+<x-app-layout>
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-@section('content')
-<div class="container">
-    <h1 class="my-4">สถิติการเข้าเรียน - {{ $student->name }}</h1>
-
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">ข้อมูลนักเรียน</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>รหัสนักเรียน:</strong> {{ $student->student_id }}</p>
-                    <p><strong>ชื่อ-นามสกุล:</strong> {{ $student->name }}</p>
-                    <p><strong>ชั้นเรียน:</strong> {{ $student->studentClass->class_name ?? '-' }}</p>
-                    <p><strong>อีเมล:</strong> {{ $student->email }}</p>
-                </div>
+            {{-- Header --}}
+            <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">สถิติการเข้าเรียน</h1>
+                <p class="text-gray-600 mt-1">{{ $student->name }}</p>
             </div>
-        </div>
 
-        <div class="col-md-8">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">สรุปสถิติการเข้าเรียน</h5>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+                {{-- Student Info --}}
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-lg font-bold text-gray-800 mb-4">ข้อมูลนักเรียน</h2>
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex gap-2"><dt class="font-semibold text-gray-500 w-28">รหัสนักเรียน</dt><dd class="text-gray-800">{{ $student->student_id }}</dd></div>
+                        <div class="flex gap-2"><dt class="font-semibold text-gray-500 w-28">ชื่อ-นามสกุล</dt><dd class="text-gray-800">{{ $student->name }}</dd></div>
+                        <div class="flex gap-2"><dt class="font-semibold text-gray-500 w-28">ชั้นเรียน</dt><dd class="text-gray-800">{{ $student->studentClass->class_name ?? '-' }}</dd></div>
+                        <div class="flex gap-2"><dt class="font-semibold text-gray-500 w-28">อีเมล</dt><dd class="text-gray-800">{{ $student->email }}</dd></div>
+                    </dl>
                 </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-md-3 col-6 mb-3">
-                            <div class="card border-success">
-                                <div class="card-body bg-success bg-opacity-10">
-                                    <h2 class="text-success mb-0">{{ $stats['present'] }}</h2>
-                                    <small class="text-muted">มาเรียน</small>
-                                </div>
-                            </div>
+
+                {{-- Stats --}}
+                <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-lg font-bold text-gray-800 mb-4">สรุปสถิติการเข้าเรียน</h2>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                            <div class="text-3xl font-bold text-green-600">{{ $stats['present'] }}</div>
+                            <div class="text-sm text-gray-500 mt-1">มาเรียน</div>
                         </div>
-                        <div class="col-md-3 col-6 mb-3">
-                            <div class="card border-danger">
-                                <div class="card-body bg-danger bg-opacity-10">
-                                    <h2 class="text-danger mb-0">{{ $stats['absent'] }}</h2>
-                                    <small class="text-muted">ขาดเรียน</small>
-                                </div>
-                            </div>
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                            <div class="text-3xl font-bold text-red-600">{{ $stats['absent'] }}</div>
+                            <div class="text-sm text-gray-500 mt-1">ขาดเรียน</div>
                         </div>
-                        <div class="col-md-3 col-6 mb-3">
-                            <div class="card border-warning">
-                                <div class="card-body bg-warning bg-opacity-10">
-                                    <h2 class="text-warning mb-0">{{ $stats['late'] }}</h2>
-                                    <small class="text-muted">มาสาย</small>
-                                </div>
-                            </div>
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+                            <div class="text-3xl font-bold text-amber-600">{{ $stats['late'] }}</div>
+                            <div class="text-sm text-gray-500 mt-1">มาสาย</div>
                         </div>
-                        <div class="col-md-3 col-6 mb-3">
-                            <div class="card border-info">
-                                <div class="card-body bg-info bg-opacity-10">
-                                    <h2 class="text-info mb-0">{{ $stats['excused'] }}</h2>
-                                    <small class="text-muted">ลากิจ/ป่วย</small>
-                                </div>
-                            </div>
+                        <div class="bg-sky-50 border border-sky-200 rounded-lg p-4 text-center">
+                            <div class="text-3xl font-bold text-sky-600">{{ $stats['excused'] }}</div>
+                            <div class="text-sm text-gray-500 mt-1">ลากิจ/ป่วย</div>
                         </div>
                     </div>
 
-                    <hr>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5>อัตราการเข้าเรียน</h5>
-                            <div class="progress" style="height: 30px;">
-                                <div class="progress-bar bg-success" role="progressbar" 
-                                     style="width: {{ $stats['percentage'] }}%"
-                                     aria-valuenow="{{ $stats['percentage'] }}" aria-valuemin="0" aria-valuemax="100">
-                                    {{ $stats['percentage'] }}%
-                                </div>
+                    <div class="border-t pt-4 flex flex-col sm:flex-row gap-6 items-start sm:items-center">
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold text-gray-600 mb-2">อัตราการเข้าเรียน (จาก {{ $stats['total'] }} ครั้ง)</p>
+                            <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                                @php $pct = $stats['percentage']; $barColor = $pct >= 80 ? 'bg-green-500' : ($pct >= 60 ? 'bg-amber-400' : 'bg-red-500'); @endphp
+                                <div class="{{ $barColor }} h-6 rounded-full flex items-center justify-center text-white text-xs font-bold transition-all"
+                                     style="width: {{ $pct }}%">{{ $pct }}%</div>
                             </div>
-                            <small class="text-muted">จากทั้งหมด {{ $stats['total'] }} ครั้ง</small>
                         </div>
-                        <div class="col-md-6 text-center">
-                            <h5>สถานะ</h5>
-                            @if($stats['percentage'] >= 80)
-                                <span class="badge bg-success fs-5">ดีมาก</span>
-                                <p class="text-muted small mt-2">เข้าเรียนสม่ำเสมอ</p>
-                            @elseif($stats['percentage'] >= 60)
-                                <span class="badge bg-warning fs-5">ควรปรับปรุง</span>
-                                <p class="text-muted small mt-2">ควรเพิ่มการเข้าเรียน</p>
+                        <div class="text-center">
+                            @if($pct >= 80)
+                                <span class="inline-block px-4 py-2 rounded-full bg-green-100 text-green-700 font-bold">ดีมาก</span>
+                                <p class="text-xs text-gray-400 mt-1">เข้าเรียนสม่ำเสมอ</p>
+                            @elseif($pct >= 60)
+                                <span class="inline-block px-4 py-2 rounded-full bg-amber-100 text-amber-700 font-bold">ควรปรับปรุง</span>
+                                <p class="text-xs text-gray-400 mt-1">ควรเพิ่มการเข้าเรียน</p>
                             @else
-                                <span class="badge bg-danger fs-5">เสี่ยง</span>
-                                <p class="text-muted small mt-2">ต้องได้รับการติดตาม</p>
+                                <span class="inline-block px-4 py-2 rounded-full bg-red-100 text-red-700 font-bold">เสี่ยง</span>
+                                <p class="text-xs text-gray-400 mt-1">ต้องได้รับการติดตาม</p>
                             @endif
                         </div>
                     </div>
                 </div>
             </div>
+
+            {{-- Action Buttons --}}
+            <div class="flex flex-wrap gap-3">
+                <a href="{{ route('students.show', $student) }}"
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold transition">ดูข้อมูลนักเรียน</a>
+                <a href="{{ route('reports.individualReport', $student) }}"
+                   class="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2 rounded-lg font-semibold transition">ดูรายงานรายบุคคล</a>
+                <a href="{{ url()->previous() }}"
+                   class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded-lg font-semibold transition">กลับ</a>
+            </div>
+
         </div>
     </div>
-
-    <div class="mt-3">
-        <a href="{{ route('students.show', $student) }}" class="btn btn-primary">ดูข้อมูลนักเรียน</a>
-        <a href="{{ route('reports.individualReport', $student) }}" class="btn btn-info">ดูรายงานรายบุคคล</a>
-        <a href="{{ url()->previous() }}" class="btn btn-secondary">กลับ</a>
-    </div>
-</div>
-@endsection
+</x-app-layout>

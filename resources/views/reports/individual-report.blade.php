@@ -1,37 +1,60 @@
+@php
+    $selectedSubjectIndex = $selectedSubject
+        ? $subjectStats->search(fn ($data) => (int) ($data['subject']->id ?? 0) === (int) $selectedSubject->id)
+        : false;
+    $initialSubjectIndex = $selectedSubjectIndex !== false ? $selectedSubjectIndex : null;
+    $defaultPdfUrl = route('reports.individualReportPdf', array_filter([
+        'student' => $student,
+        'subject' => $selectedSubject?->id,
+    ]));
+    $subjectPdfUrls = $subjectStats->mapWithKeys(fn ($data, $index) => [
+        $index => route('reports.individualReportPdf', [
+            'student' => $student,
+            'subject' => $data['subject']->id,
+        ]),
+    ])->all();
+@endphp
 <x-app-layout>
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div x-data="{
+                selectedSubject: @js($initialSubjectIndex),
+                defaultPdfUrl: @js($defaultPdfUrl),
+                subjectPdfUrls: @js($subjectPdfUrls)
+            }">
 
-            {{-- Header --}}
-            <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-800">รายงานรายบุคคล</h1>
-                        <p class="text-gray-600">
-                            สรุปประวัติการเข้าเรียนของ
-                            <span class="font-semibold text-gray-800">{{ $student->name }}</span>
-                        </p>
-                    </div>
-                    <div class="flex flex-wrap gap-3">
-                        <a href="{{ route('reports.individualReportPdf', $student) }}" target="_blank"
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-semibold transition">
-                            ดาวน์โหลด PDF
-                        </a>
-                        @if(strtolower(auth()->user()->role ?? '') !== 'student')
-                            <a href="{{ route('students.index') }}"
-                                class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-3 rounded-lg font-semibold transition">
-                                กลับ
+                {{-- Header --}}
+                <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-800">รายงานรายบุคคล</h1>
+                            <p class="text-gray-600">
+                                สรุปประวัติการเข้าเรียนของ
+                                <span class="font-semibold text-gray-800">{{ $student->name }}</span>
+                            </p>
+                            @if($selectedSubject)
+                                <p class="text-sm text-blue-700 font-semibold mt-2">
+                                    กำลังแสดงเฉพาะวิชา {{ $selectedSubject->name }}
+                                </p>
+                            @endif
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <a x-bind:href="selectedSubject !== null && subjectPdfUrls[selectedSubject] ? subjectPdfUrls[selectedSubject] : defaultPdfUrl" target="_blank"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-semibold transition">
+                                <span x-text="selectedSubject !== null ? 'ดาวน์โหลด PDF รายวิชา' : 'ดาวน์โหลด PDF'"></span>
                             </a>
-                        @endif
+                            @if(strtolower(auth()->user()->role ?? '') !== 'student')
+                                <a href="{{ route('students.index') }}"
+                                    class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-3 rounded-lg font-semibold transition">
+                                    กลับ
+                                </a>
+                            @endif
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {{-- Overall Stats --}}
-            {{-- REMOVED --}}
-
-            {{-- Student Info (full width, horizontal) + Subject Overview --}}
-            <div x-data="{ selectedSubject: null }">
+                {{-- Overall Stats --}}
+                {{-- REMOVED --}}
 
                 {{-- Student Info Card --}}
                 <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
@@ -219,10 +242,10 @@
                                                         {{ \Carbon\Carbon::parse($record->attendance_date)->format('d/m/Y') }}
                                                     </td>
                                                     <td class="px-4 py-3 text-sm text-gray-600 text-center">
-                                                        {{ $record->check_in_time ? \Carbon\Carbon::parse($record->check_in_time)->format('H:i') : '-' }}
+                                                        {{ in_array($record->status, ['present','late']) && $record->check_in_time ? \Carbon\Carbon::parse($record->check_in_time)->format('H:i') : '-' }}
                                                     </td>
                                                     <td class="px-4 py-3 text-sm text-gray-600 text-center">
-                                                        {{ $record->check_out_time ? \Carbon\Carbon::parse($record->check_out_time)->format('H:i') : '-' }}
+                                                        {{ $record->check_out_time ? \Carbon\Carbon::parse($record->check_out_time)->format('H:i') : (in_array($record->status, ['present','late']) && $record->schedule && $record->schedule->end_time ? \Carbon\Carbon::parse($record->schedule->end_time)->format('H:i') : '-') }}
                                                     </td>
                                                     <td class="px-4 py-3 text-center">
                                                         <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $sc }}">{{ $st }}</span>

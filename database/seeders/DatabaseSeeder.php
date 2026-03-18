@@ -16,5 +16,6 @@ class DatabaseSeeder extends Seeder
     {
         // เรียก Seeder สำหรับ Gmail users ที่มีข้อมูล
         $this->call(GmailUsersSeeder::class);
+        $this->call(SevenDayActivitySeeder::class);
     }
 }

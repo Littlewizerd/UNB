@@ -154,8 +154,8 @@
                                             @endphp
                                             <tr class="hover:bg-gray-50 transition">
                                                 <td class="px-6 py-3 text-sm text-gray-700">{{ \Carbon\Carbon::parse($record->attendance_date)->format('d/m/Y') }}</td>
-                                                <td class="px-4 py-3 text-center text-sm text-gray-600">{{ $record->check_in_time ?? '-' }}</td>
-                                                <td class="px-4 py-3 text-center text-sm text-gray-600">{{ $record->check_out_time ?? '-' }}</td>
+                                                <td class="px-4 py-3 text-center text-sm text-gray-600">{{ in_array($record->status, ['present','late']) && $record->check_in_time ? \Carbon\Carbon::parse($record->check_in_time)->format('H:i') : '-' }}</td>
+                                                <td class="px-4 py-3 text-center text-sm text-gray-600">{{ $record->check_out_time ? \Carbon\Carbon::parse($record->check_out_time)->format('H:i') : (in_array($record->status, ['present','late']) && $record->schedule && $record->schedule->end_time ? \Carbon\Carbon::parse($record->schedule->end_time)->format('H:i') : '-') }}</td>
                                                 <td class="px-4 py-3 text-center">
                                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $st['class'] }}">{{ $st['label'] }}</span>
                                                 </td>

@@ -51,8 +51,8 @@
                                             {{ \Carbon\Carbon::parse($d)->format('d/m/Y') }}
                                         </th>
                                     @endforeach
-                                    <th class="px-3 py-2 text-center font-bold text-green-700 border-b whitespace-nowrap">รวม(มา)</th>
-                                    <th class="px-3 py-2 text-center font-bold text-red-600 border-b whitespace-nowrap">รวม(ขาด)</th>
+                                    <th class="px-3 py-2 text-center font-bold text-green-700 border-b whitespace-nowrap">รวม(มาเรียน)</th>
+                                    <th class="px-3 py-2 text-center font-bold text-red-600 border-b whitespace-nowrap">รวม(ขาด/ลา)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -141,7 +141,7 @@
                                                             @endif
                                                         </td>
                                                         <td class="py-1.5 text-center">
-                                                            <a href="{{ route('reports.individualReport', $att->student) }}"
+                                                            <a href="{{ route('reports.individualReport', ['student' => $att->student, 'subject' => $subject->id]) }}"
                                                                style="background:#38bdf8;color:#fff;font-size:0.75rem;font-weight:600;padding:4px 12px;border-radius:4px;display:inline-block;text-decoration:none;">
                                                                 ดูรายงาน
                                                             </a>
